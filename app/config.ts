@@ -18,8 +18,8 @@ export const SITE_CONFIG = {
 
   // Geofencing Coordinates (Elevate Eagles Landing)
   location: {
-    lat: 33.5186,
-    lng: -84.2375,
+    lat: 33.9575,
+    lng: 84.3486,
     radius: 0.25 // Miles (1/4 mile)
   },
 
