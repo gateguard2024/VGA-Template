@@ -9,26 +9,14 @@ export default function VisitorGate() {
   useEffect(() => {
     const checkHours = () => {
       const now = new Date();
-      const day = now.getDay(); // 0 = Sun, 1-5 = M-F, 6 = Sat
+      const day = now.getDay(); 
       const hour = now.getHours();
-
       let open = false;
-      // M-F 10am to 6pm
-      if (day >= 1 && day <= 5) {
-        open = hour >= 10 && hour < 18;
-      } 
-      // Sat 10am to 5pm
-      else if (day === 6) {
-        open = hour >= 10 && hour < 17;
-      } 
-      // Sun Closed
-      else {
-        open = false;
-      }
-      
+      if (day >= 1 && day <= 5) { open = hour >= 10 && hour < 18; } 
+      else if (day === 6) { open = hour >= 10 && hour < 17; } 
+      else { open = false; }
       setIsBusinessHours(open);
     };
-    
     checkHours();
     const interval = setInterval(checkHours, 60000);
     return () => clearInterval(interval);
@@ -39,17 +27,10 @@ export default function VisitorGate() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col items-center font-sans selection:bg-blue-600">
-      
-      {/* BRANDED LOGO HEADER - FULL WIDTH ALIGNMENT */}
       <div className="mt-4 mb-4 flex flex-col items-center w-full max-w-md text-center">
         <div className="relative w-full flex justify-center drop-shadow-[0_0_35px_rgba(59,130,246,0.3)]">
-            <img 
-              src="/Logo.jpg" 
-              alt="Gate Guard Logo" 
-              className="w-[92%] h-auto object-contain" 
-            />
+            <img src="/Logo.jpg" alt="Gate Guard Logo" className="w-[92%] h-auto object-contain" />
         </div>
-        
         <div className={`mt-4 px-5 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 shadow-2xl ${isBusinessHours ? 'border-blue-500/50 bg-blue-500/10 text-blue-400' : 'border-slate-800 bg-slate-900/40 text-slate-500'}`}>
           <div className={`w-2 h-2 rounded-full ${isBusinessHours ? 'bg-blue-500 animate-pulse' : 'bg-slate-700'}`}></div>
           {isBusinessHours ? 'System Active' : 'Secure After-Hours Mode'}
@@ -57,21 +38,18 @@ export default function VisitorGate() {
       </div>
 
       <div className="w-full max-w-md space-y-4">
-
-        {/* AFTER-HOURS NOTICE (Only shows when closed) */}
         {!isBusinessHours && (
           <div className="bg-blue-600/5 border border-blue-500/20 p-5 rounded-[2rem] flex items-center gap-4 mb-2 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
             <div className="bg-blue-600/20 p-3 rounded-2xl text-blue-500 shrink-0">
               <ShieldCheck size={24} />
             </div>
-            <p className="text-xs font-bold text-slate-300 leading-snug uppercase tracking-tight">
+            <p className="text-xs font-bold text-slate-300 leading-snug uppercase tracking-tight text-left">
               <span className="text-blue-400 block mb-1">Entry Assistance</span>
-              Office is closed. Please find the resident in the directory below to request gate access.
+              Office is closed. Find the resident in the directory to request gate access.
             </p>
           </div>
         )}
         
-        {/* 1. DIRECTORY BUTTON */}
         <Link href="/directory" className="group relative bg-gradient-to-b from-[#111] to-[#000] border border-blue-500/40 flex items-center justify-between p-6 rounded-[2rem] shadow-[0_15px_30px_-10px_rgba(59,130,246,0.3)] active:scale-[0.97] transition-all">
           <div className="flex items-center gap-5 relative z-10">
             <div className="bg-blue-600 p-3 rounded-2xl shadow-[0_0_15px_rgba(37,99,235,0.4)] text-white">
@@ -82,7 +60,6 @@ export default function VisitorGate() {
           <ChevronRight className="text-blue-500/40" size={24} />
         </Link>
 
-        {/* 2. CALL LEASING BUTTON */}
         {isBusinessHours ? (
           <a href={officePhone} className="bg-[#111] border border-white/5 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
             <div className="flex items-center gap-5">
@@ -102,3 +79,30 @@ export default function VisitorGate() {
             </div>
           </div>
         )}
+
+        <Link href="/packages" className="bg-[#111] border border-white/5 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
+          <div className="flex items-center gap-5">
+            <div className="bg-white/5 p-3 rounded-2xl text-slate-400">
+              <Package size={24} />
+            </div>
+            <span className="text-lg font-bold text-slate-300 uppercase tracking-tight">Packages</span>
+          </div>
+          <ChevronRight className="text-slate-800" size={20} />
+        </Link>
+
+        <a href={isBusinessHours ? officePhone : callCenterPhone} className="bg-red-950/10 border border-red-500/20 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
+          <div className="flex items-center gap-5">
+            <div className="bg-red-500/10 p-3 rounded-2xl text-red-500">
+              <AlertTriangle size={24} />
+            </div>
+            <span className="text-lg font-bold text-red-600 uppercase tracking-tight">Emergency</span>
+          </div>
+        </a>
+      </div>
+      
+      <footer className="mt-auto py-12 text-[8px] text-slate-800 font-black tracking-[0.8em] uppercase text-center">
+        Gate Guard Security Interface
+      </footer>
+    </div>
+  );
+}
