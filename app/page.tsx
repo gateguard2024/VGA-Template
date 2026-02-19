@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Package, AlertTriangle, Building2, Clock, ShieldCheck, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { SITE_CONFIG } from './config';
 
 export default function VisitorGate() {
   const [isBusinessHours, setIsBusinessHours] = useState(false);
@@ -12,8 +13,13 @@ export default function VisitorGate() {
       const day = now.getDay(); 
       const hour = now.getHours();
       let open = false;
-      if (day >= 1 && day <= 5) { open = hour >= 10 && hour < 18; } 
-      else if (day === 6) { open = hour >= 10 && hour < 17; } 
+
+      if (day >= 1 && day <= 5) { 
+        open = hour >= SITE_CONFIG.hours.weekdays.open && hour < SITE_CONFIG.hours.weekdays.close; 
+      } 
+      else if (day === 6) { 
+        open = hour >= SITE_CONFIG.hours.saturday.open && hour < SITE_CONFIG.hours.saturday.close; 
+      } 
       else { open = false; }
       setIsBusinessHours(open);
     };
@@ -22,14 +28,14 @@ export default function VisitorGate() {
     return () => clearInterval(interval);
   }, []);
 
-  const officePhone = "tel:7705256055"; 
-  const callCenterPhone = "tel:5550999"; 
+  const officePhone = `tel:${SITE_CONFIG.officePhone}`; 
+  const callCenterPhone = `tel:${SITE_CONFIG.emergencyPhone}`; 
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col items-center font-sans selection:bg-blue-600">
       <div className="mt-4 mb-4 flex flex-col items-center w-full max-w-md text-center">
         <div className="relative w-full flex justify-center drop-shadow-[0_0_35px_rgba(59,130,246,0.3)]">
-            <img src="/Logo.jpg" alt="Gate Guard Logo" className="w-[92%] h-auto object-contain" />
+            <img src="/Logo.jpg" alt={SITE_CONFIG.brandName} className="w-[92%] h-auto object-contain" />
         </div>
         <div className={`mt-4 px-5 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 shadow-2xl ${isBusinessHours ? 'border-blue-500/50 bg-blue-500/10 text-blue-400' : 'border-slate-800 bg-slate-900/40 text-slate-500'}`}>
           <div className={`w-2 h-2 rounded-full ${isBusinessHours ? 'bg-blue-500 animate-pulse' : 'bg-slate-700'}`}></div>
@@ -39,13 +45,13 @@ export default function VisitorGate() {
 
       <div className="w-full max-w-md space-y-4">
         {!isBusinessHours && (
-          <div className="bg-blue-600/5 border border-blue-500/20 p-5 rounded-[2rem] flex items-center gap-4 mb-2 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+          <div className="bg-blue-600/5 border border-blue-500/20 p-5 rounded-[2rem] flex items-center gap-4 mb-2 shadow-[0_0_20px_rgba(59,130,246,0.1)] text-left">
             <div className="bg-blue-600/20 p-3 rounded-2xl text-blue-500 shrink-0">
               <ShieldCheck size={24} />
             </div>
-            <p className="text-xs font-bold text-slate-300 leading-snug uppercase tracking-tight text-left">
+            <p className="text-xs font-bold text-slate-300 leading-snug uppercase tracking-tight">
               <span className="text-blue-400 block mb-1">Entry Assistance</span>
-              Office is closed. Find the resident in the directory to request gate access.
+              Office is closed. Find the resident in the directory below to request gate access.
             </p>
           </div>
         )}
@@ -101,7 +107,7 @@ export default function VisitorGate() {
       </div>
       
       <footer className="mt-auto py-12 text-[8px] text-slate-800 font-black tracking-[0.8em] uppercase text-center">
-        Gate Guard Security Interface
+        {SITE_CONFIG.footerText}
       </footer>
     </div>
   );
