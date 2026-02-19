@@ -18,12 +18,8 @@ export default function Directory() {
         if (Array.isArray(data)) { setResidents(data); } 
         else if (data?.data && Array.isArray(data.data)) { setResidents(data.data); } 
         else { setResidents([]); }
-      } catch (e) { 
-        console.error(e);
-        setHasError(true); 
-      } finally { 
-        setLoading(false); 
-      }
+      } catch (e) { setHasError(true); } 
+      finally { setLoading(false); }
     }
     fetchResidents();
   }, []);
@@ -73,7 +69,7 @@ export default function Directory() {
         <div className="w-full max-w-md space-y-3">
           {filteredResidents.map((res: any, idx: number) => (
             <div key={res.id || idx} className="bg-[#0f0f0f] border border-white/5 p-5 rounded-[1.8rem] flex justify-between items-center active:bg-blue-600/5 transition-all">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 text-left">
                 <div className="w-11 h-11 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 font-black text-sm">
                   {res.lastName?.[0] || 'R'}
                 </div>
