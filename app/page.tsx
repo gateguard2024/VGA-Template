@@ -38,7 +38,7 @@ export default function VisitorGate() {
       <div className="mt-8 mb-12 flex flex-col items-center">
         <div className="w-32 h-32 mb-4 relative">
             {/* Replace /logo.png with your actual uploaded path */}
-            <img src="/logo.png" alt="Gate Guard Logo" className="w-full h-full object-contain" />
+            <img src="/Logo.jpg" alt="Gate Guard Logo" className="w-full h-full object-contain" />
         </div>
         <div className={`px-4 py-1 rounded-full border text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 ${isBusinessHours ? 'border-blue-500/50 text-blue-400' : 'border-slate-700 text-slate-500'}`}>
           <div className={`w-1.5 h-1.5 rounded-full ${isBusinessHours ? 'bg-blue-500 animate-pulse' : 'bg-slate-600'}`}></div>
