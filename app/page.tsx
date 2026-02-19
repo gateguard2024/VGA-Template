@@ -13,7 +13,7 @@ export default function HomePage() {
         <div className="relative rounded-xl overflow-hidden h-44 border border-white/10 shadow-2xl bg-[#0a0a0a] flex items-center justify-center">
           {/* Using your logo file from public folder */}
           <img 
-            src="/public/Logo.jpg" 
+            src="/Logo.jpg" 
             alt="Gate Guard Logo"
             className="h-32 w-auto object-contain z-10 drop-shadow-[0_0_15px_rgba(37,99,235,0.3)]"
           />
