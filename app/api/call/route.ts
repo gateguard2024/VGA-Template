@@ -3,7 +3,7 @@ import { SDK } from '@ringcentral/sdk';
 
 export async function POST(req: Request) {
     try {
-        const { residentPhone } = await req.json();
+        const { residentPhone, visitorPhone } = await req.json();
 
         const rcsdk = new SDK({
             server: 'https://platform.ringcentral.com',
@@ -12,13 +12,14 @@ export async function POST(req: Request) {
         });
 
         const platform = rcsdk.platform();
-
-        // Login using the JWT you generated
         await platform.login({ jwt: process.env.RC_JWT_TOKEN });
 
-        // RingOut initiates the masked privacy call
+        // THE CORRECT BRIDGE LOGIC:
+        // 'from' = The visitor's physical phone number (the one they are holding)
+        // 'to' = The resident's private number from Brivo
+        // 'callerId' = Your Main Office Line (masks both)
         await platform.post('/restapi/v1.0/account/~/extension/~/ring-out', {
-            from: { phoneNumber: process.env.RC_USERNAME }, 
+            from: { phoneNumber: visitorPhone }, 
             to: { phoneNumber: residentPhone }, 
             callerId: { phoneNumber: process.env.RC_USERNAME },
             playPrompt: false
@@ -26,7 +27,6 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true });
     } catch (error: any) {
-        console.error("RingCentral Error:", error.message);
-        return NextResponse.json({ error: 'Bridge Offline', details: error.message }, { status: 500 });
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
