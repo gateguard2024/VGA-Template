@@ -68,35 +68,46 @@ export default function SecureDirectory() {
   };
 
 useEffect(() => {
+  // 1. SET A MANUAL KILL-SWITCH (10 Seconds)
+  const pinwheelTimer = setTimeout(() => {
+    if (isWithinRange === null) {
+      console.log("GPS timed out - Forcing Pinwheel to stop.");
+      setIsWithinRange(false);
+    }
+  }, 10000);
+
   const geoOptions = {
-    enableHighAccuracy: true, // Uses GPS satellites
-    timeout: 10000,           // STOP SPINNING after 10 seconds
-    maximumAge: 0             // Don't use old cached locations
+    enableHighAccuracy: true,
+    timeout: 8000, // Browser-level timeout
+    maximumAge: 0
   };
 
   if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        clearTimeout(pinwheelTimer); // Stop the manual timer if GPS works
         const dist = getDistance(
           position.coords.latitude, 
           position.coords.longitude, 
           SITE_CONFIG.location.lat, 
           SITE_CONFIG.location.lng
         );
-        
-        // If you are within 0.5 miles of the gate entrance, let you in
         setIsWithinRange(dist <= SITE_CONFIG.location.radius);
       },
       (error) => {
-        // If GPS times out or fails, stop the pinwheel and show "Access Denied"
-        console.error("Location Error:", error.message);
-        setIsWithinRange(false); 
+        clearTimeout(pinwheelTimer);
+        console.error("GPS Error:", error.message);
+        setIsWithinRange(false); // Stop pinwheel on error
       },
       geoOptions
     );
   } else {
+    clearTimeout(pinwheelTimer);
     setIsWithinRange(false);
   }
+
+  // Cleanup timer if the user leaves the page
+  return () => clearTimeout(pinwheelTimer);
 }, []);
 
   const filteredResidents = useMemo(() => {
