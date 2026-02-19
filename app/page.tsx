@@ -8,24 +8,17 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col font-sans items-center">
       
-      {/* 1. Horizontal Header Image with Overlay Logo */}
+      {/* 1. Header Banner with Your Logo */}
       <div className="w-full max-w-lg relative px-4 pt-4">
-        <div className="relative rounded-xl overflow-hidden h-44 border border-white/10 shadow-2xl">
-          {/* Replace this URL with a photo of the actual Eagles Landing gate if available */}
+        <div className="relative rounded-xl overflow-hidden h-44 border border-white/10 shadow-2xl bg-[#0a0a0a] flex items-center justify-center">
+          {/* Using your logo file from public folder */}
           <img 
-            src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1000" 
-            alt="Property Entrance"
-            className="w-full h-full object-cover opacity-50"
+            src="/gate-guard-logo.png" 
+            alt="Gate Guard Logo"
+            className="h-32 w-auto object-contain z-10 drop-shadow-[0_0_15px_rgba(37,99,235,0.3)]"
           />
-          {/* Hexagonal "Gate Guard" Logo Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center">
-             <div className="w-24 h-24 bg-blue-600/10 backdrop-blur-xl border-2 border-blue-500 shadow-[0_0_30px_rgba(37,99,235,0.4)] flex items-center justify-center rotate-45">
-                <div className="rotate-[-45deg] flex flex-col items-center">
-                  <span className="font-black text-[12px] tracking-tighter leading-none">GATE</span>
-                  <span className="font-black text-[12px] tracking-tighter leading-none text-blue-400">GUARD</span>
-                </div>
-             </div>
-          </div>
+          {/* Subtle background glow behind the logo */}
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-600/5 to-transparent pointer-events-none" />
         </div>
       </div>
 
@@ -48,10 +41,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 4. Action Buttons Layout */}
+      {/* 4. Action Buttons */}
       <main className="w-full max-w-md px-6 mt-10 space-y-4 pb-12">
-        
-        {/* DIRECTORY - THE PRIMARY ACTION WITH BLUE HAZE */}
         <Link href="/directory" 
           className="flex items-center justify-between w-full bg-[#0a0a0a] border border-blue-500/30 p-5 rounded-[1.8rem] group 
                      shadow-[0_0_40px_rgba(37,99,235,0.1)] transition-all active:scale-95"
@@ -65,7 +56,6 @@ export default function HomePage() {
           <ChevronRight size={22} className="text-blue-500/40 group-hover:translate-x-1 transition-transform" />
         </Link>
 
-        {/* CALL LEASING */}
         <button className="flex items-center justify-between w-full bg-[#0f0f0f] border border-white/5 p-5 rounded-[1.8rem] active:scale-95 transition-all">
           <div className="flex items-center gap-5">
             <div className="bg-white/5 p-3.5 rounded-2xl">
@@ -75,7 +65,6 @@ export default function HomePage() {
           </div>
         </button>
 
-        {/* PACKAGES */}
         <button className="flex items-center justify-between w-full bg-[#0f0f0f] border border-white/5 p-5 rounded-[1.8rem] active:scale-95 transition-all">
           <div className="flex items-center gap-5">
             <div className="bg-white/5 p-3.5 rounded-2xl">
@@ -83,10 +72,8 @@ export default function HomePage() {
             </div>
             <span className="text-2xl font-black italic uppercase tracking-tighter text-slate-400">Packages</span>
           </div>
-          <ChevronRight size={22} className="text-white/5" />
         </button>
 
-        {/* EMERGENCY */}
         <button className="flex items-center justify-between w-full bg-[#150a0a] border border-red-900/20 p-5 rounded-[1.8rem] active:scale-95 transition-all">
           <div className="flex items-center gap-5">
             <div className="bg-red-600/10 p-3.5 rounded-2xl text-red-500">
@@ -95,13 +82,7 @@ export default function HomePage() {
             <span className="text-2xl font-black italic uppercase tracking-tighter text-red-600/80">Emergency</span>
           </div>
         </button>
-
       </main>
-
-      {/* Footer Branding */}
-      <footer className="mt-auto py-8 opacity-10">
-        <p className="text-[9px] font-black uppercase tracking-[0.6em]">Gate Guard Security Interface</p>
-      </footer>
     </div>
   );
 }
