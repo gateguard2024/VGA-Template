@@ -16,6 +16,13 @@ export const SITE_CONFIG = {
     sunday: { closed: true }           // Sun: Closed
   },
 
+  // Geofencing Coordinates (Elevate Eagles Landing)
+  location: {
+    lat: 33.5186,
+    lng: -84.2375,
+    radius: 0.25 // Miles (1/4 mile)
+  },
+
   // Brivo Settings (Reference)
   brivoAccountId: "75828250",
   
