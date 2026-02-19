@@ -67,32 +67,32 @@ export default function SecureDirectory() {
     return R * c;
   };
 
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const dist = getDistance(position.coords.latitude, position.coords.longitude, SITE_CONFIG.location.lat, SITE_CONFIG.location.lng);
-        setIsWithinRange(dist <= 0.25);
-      }, () => {
-          // If user denies GPS, we default to out of range for security
-          setIsWithinRange(false);
-      });
-    } else {
-        setIsWithinRange(false);
-    }
+useEffect(() => {
+  const options = {
+    enableHighAccuracy: true, // Forces the phone to use GPS satellites
+    timeout: 10000,           // Give up after 10 seconds if no lock
+    maximumAge: 0             // Do NOT use a cached old location
+  };
 
-    async function fetchResidents() {
-      try {
-        const response = await fetch('/api/brivo');
-        const data = await response.json();
-        setResidents(Array.isArray(data) ? data : (data?.data || []));
-      } catch (e) { 
-          console.error(e); 
-      } finally { 
-          setLoading(false); 
-      }
-    }
-    fetchResidents();
-  }, []);
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition((position) => {
+      const dist = getDistance(
+        position.coords.latitude, 
+        position.coords.longitude, 
+        SITE_CONFIG.location.lat, 
+        SITE_CONFIG.location.lng
+      );
+      
+      // LOG TO CONSOLE (For Debugging):
+      console.log(`Your Distance: ${dist.toFixed(3)} miles`);
+      
+      setIsWithinRange(dist <= 0.25);
+    }, (error) => {
+      console.error("GPS Error:", error.message);
+      setIsWithinRange(false);
+    }, options); // <--- Add options here
+  }
+}, []);
 
   const filteredResidents = useMemo(() => {
     if (searchTerm.length < 3) return [];
