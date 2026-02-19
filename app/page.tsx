@@ -34,25 +34,26 @@ export default function VisitorGate() {
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col items-center font-sans selection:bg-blue-600">
       
-      {/* BRANDED LOGO HEADER - FORCED SMALLER SIZE */}
-      <div className="mt-8 mb-6 flex flex-col items-center">
-        <div className="relative drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]">
+      {/* BRANDED LOGO HEADER - WIDER ALIGNMENT */}
+      <div className="mt-6 mb-4 flex flex-col items-center w-full max-w-md">
+        <div className="relative drop-shadow-[0_0_30px_rgba(59,130,246,0.4)]">
             <img 
               src="/Logo.jpg" 
               alt="Gate Guard Logo" 
-              className="w-[180px] h-auto object-contain mx-auto" 
+              className="w-[280px] h-auto object-contain mx-auto" 
             />
         </div>
         
-        <div className={`mt-8 px-5 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 shadow-2xl ${isBusinessHours ? 'border-blue-500/50 bg-blue-500/10 text-blue-400' : 'border-slate-800 bg-slate-900/40 text-slate-500'}`}>
+        {/* Status Badge moved slightly closer to logo */}
+        <div className={`mt-4 px-5 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 shadow-2xl ${isBusinessHours ? 'border-blue-500/50 bg-blue-500/10 text-blue-400' : 'border-slate-800 bg-slate-900/40 text-slate-500'}`}>
           <div className={`w-2 h-2 rounded-full ${isBusinessHours ? 'bg-blue-500 animate-pulse' : 'bg-slate-700'}`}></div>
-          {isBusinessHours ? 'Secure Entry Active' : 'After-Hours Mode'}
+          {isBusinessHours ? 'System Active' : 'Secure After-Hours'}
         </div>
       </div>
 
       <div className="w-full max-w-md space-y-4">
         
-        {/* BUTTON: DIRECTORY (Branded Blue Glow) */}
+        {/* BUTTON: DIRECTORY */}
         <Link href="/directory" className="group relative bg-gradient-to-b from-[#111] to-[#000] border border-blue-500/40 flex items-center justify-between p-6 rounded-[2rem] shadow-[0_15px_30px_-10px_rgba(59,130,246,0.3)] active:scale-[0.97] transition-all">
           <div className="flex items-center gap-5 relative z-10">
             <div className="bg-blue-600 p-3 rounded-2xl shadow-[0_0_15px_rgba(37,99,235,0.4)]">
@@ -79,37 +80,4 @@ export default function VisitorGate() {
               <div className="bg-transparent p-3 rounded-2xl text-slate-700">
                 <Clock size={24} />
               </div>
-              <span className="text-lg font-bold text-slate-600 uppercase italic">Office Closed</span>
-            </div>
-          </div>
-        )}
-
-        {/* SECONDARY BUTTONS */}
-        <div className="grid grid-cols-1 gap-4 pt-2">
-          <a href={isBusinessHours ? officePhone : callCenterPhone} className="bg-[#111] border border-white/5 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
-            <div className="flex items-center gap-5">
-              <div className="bg-white/5 p-3 rounded-2xl text-slate-400">
-                <Package size={24} />
-              </div>
-              <span className="text-lg font-bold text-slate-300 uppercase tracking-tight">Packages</span>
-            </div>
-          </a>
-
-          <a href={isBusinessHours ? officePhone : callCenterPhone} className="bg-red-950/10 border border-red-500/20 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
-            <div className="flex items-center gap-5">
-              <div className="bg-red-500/10 p-3 rounded-2xl text-red-500">
-                <AlertTriangle size={24} />
-              </div>
-              <span className="text-lg font-bold text-red-600 uppercase tracking-tight">Emergency</span>
-            </div>
-          </a>
-        </div>
-
-      </div>
-      
-      <footer className="mt-auto py-12 text-[8px] text-slate-800 font-black tracking-[0.8em] uppercase text-center">
-        Gate Guard Security Interface
-      </footer>
-    </div>
-  );
-}
+              <span className="
