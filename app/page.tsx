@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Users, Package, AlertTriangle, Building2, Clock, ShieldCheck } from 'lucide-react';
+import { Users, Package, AlertTriangle, Building2, Clock, ShieldCheck, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function VisitorGate() {
@@ -34,7 +34,7 @@ export default function VisitorGate() {
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col items-center font-sans selection:bg-blue-600">
       
-      {/* BRANDED LOGO HEADER - FULL WIDTH ALIGNMENT */}
+      {/* BRANDED LOGO HEADER */}
       <div className="mt-4 mb-4 flex flex-col items-center w-full max-w-md">
         <div className="relative w-full flex justify-center drop-shadow-[0_0_35px_rgba(59,130,246,0.3)]">
             <img 
@@ -52,7 +52,7 @@ export default function VisitorGate() {
 
       <div className="w-full max-w-md space-y-4">
         
-        {/* BUTTON: DIRECTORY */}
+        {/* 1. DIRECTORY BUTTON */}
         <Link href="/directory" className="group relative bg-gradient-to-b from-[#111] to-[#000] border border-blue-500/40 flex items-center justify-between p-6 rounded-[2rem] shadow-[0_15px_30px_-10px_rgba(59,130,246,0.3)] active:scale-[0.97] transition-all">
           <div className="flex items-center gap-5 relative z-10">
             <div className="bg-blue-600 p-3 rounded-2xl shadow-[0_0_15px_rgba(37,99,235,0.4)]">
@@ -63,14 +63,14 @@ export default function VisitorGate() {
           <ShieldCheck className="text-blue-500/20" size={24} />
         </Link>
 
-        {/* BUTTON: CALL LEASING */}
+        {/* 2. CALL LEASING BUTTON */}
         {isBusinessHours ? (
           <a href={officePhone} className="bg-[#111] border border-white/5 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
             <div className="flex items-center gap-5">
               <div className="bg-white/5 p-3 rounded-2xl text-slate-400">
                 <Building2 size={24} />
               </div>
-              <span className="text-lg font-bold tracking-tight text-slate-200 uppercase">Call Leasing</span>
+              <span className="text-lg font-bold tracking-tight text-slate-100 uppercase">Call Leasing</span>
             </div>
           </a>
         ) : (
@@ -84,26 +84,26 @@ export default function VisitorGate() {
           </div>
         )}
 
-        {/* SECONDARY BUTTONS */}
-        <div className="grid grid-cols-1 gap-4 pt-2">
-          <a href={isBusinessHours ? officePhone : callCenterPhone} className="bg-[#111] border border-white/5 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
-            <div className="flex items-center gap-5">
-              <div className="bg-white/5 p-3 rounded-2xl text-slate-400">
-                <Package size={24} />
-              </div>
-              <span className="text-lg font-bold text-slate-300 uppercase tracking-tight">Packages</span>
+        {/* 3. PACKAGES BUTTON (Now linking to /packages) */}
+        <Link href="/packages" className="bg-[#111] border border-white/5 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
+          <div className="flex items-center gap-5">
+            <div className="bg-white/5 p-3 rounded-2xl text-slate-400">
+              <Package size={24} />
             </div>
-          </a>
+            <span className="text-lg font-bold text-slate-300 uppercase tracking-tight">Packages</span>
+          </div>
+          <ChevronRight className="text-slate-800" size={20} />
+        </Link>
 
-          <a href={isBusinessHours ? officePhone : callCenterPhone} className="bg-red-950/10 border border-red-500/20 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
-            <div className="flex items-center gap-5">
-              <div className="bg-red-500/10 p-3 rounded-2xl text-red-500">
-                <AlertTriangle size={24} />
-              </div>
-              <span className="text-lg font-bold text-red-600 uppercase tracking-tight">Emergency</span>
+        {/* 4. EMERGENCY BUTTON */}
+        <a href={isBusinessHours ? officePhone : callCenterPhone} className="bg-red-950/10 border border-red-500/20 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
+          <div className="flex items-center gap-5">
+            <div className="bg-red-500/10 p-3 rounded-2xl text-red-500">
+              <AlertTriangle size={24} />
             </div>
-          </a>
-        </div>
+            <span className="text-lg font-bold text-red-600 uppercase tracking-tight">Emergency</span>
+          </div>
+        </a>
 
       </div>
       
