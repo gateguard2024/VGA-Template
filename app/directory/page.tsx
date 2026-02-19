@@ -68,29 +68,34 @@ export default function SecureDirectory() {
   };
 
 useEffect(() => {
-  const options = {
-    enableHighAccuracy: true, // Forces the phone to use GPS satellites
-    timeout: 10000,           // Give up after 10 seconds if no lock
-    maximumAge: 0             // Do NOT use a cached old location
+  const geoOptions = {
+    enableHighAccuracy: true, // Uses GPS satellites
+    timeout: 10000,           // STOP SPINNING after 10 seconds
+    maximumAge: 0             // Don't use old cached locations
   };
 
   if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition((position) => {
-      const dist = getDistance(
-        position.coords.latitude, 
-        position.coords.longitude, 
-        SITE_CONFIG.location.lat, 
-        SITE_CONFIG.location.lng
-      );
-      
-      // LOG TO CONSOLE (For Debugging):
-      console.log(`Your Distance: ${dist.toFixed(3)} miles`);
-      
-      setIsWithinRange(dist <= 0.25);
-    }, (error) => {
-      console.error("GPS Error:", error.message);
-      setIsWithinRange(false);
-    }, options); // <--- Add options here
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const dist = getDistance(
+          position.coords.latitude, 
+          position.coords.longitude, 
+          SITE_CONFIG.location.lat, 
+          SITE_CONFIG.location.lng
+        );
+        
+        // If you are within 0.5 miles of the gate entrance, let you in
+        setIsWithinRange(dist <= SITE_CONFIG.location.radius);
+      },
+      (error) => {
+        // If GPS times out or fails, stop the pinwheel and show "Access Denied"
+        console.error("Location Error:", error.message);
+        setIsWithinRange(false); 
+      },
+      geoOptions
+    );
+  } else {
+    setIsWithinRange(false);
   }
 }, []);
 
