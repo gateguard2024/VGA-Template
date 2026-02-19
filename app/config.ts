@@ -7,7 +7,7 @@ export const SITE_CONFIG = {
   
   // Contact Numbers
   officePhone: "7705256055",      // Standard Leasing Office
-  emergencyPhone: "5550999",     // After-Hours/Emergency Call Center
+  emergencyPhone: "4048425072",     // After-Hours/Emergency Call Center
   
   // Office Hours (24-hour format)
   hours: {
@@ -18,8 +18,8 @@ export const SITE_CONFIG = {
 
   // Geofencing Coordinates (Elevate Eagles Landing)
   location: {
-    lat: 33.9200,
-    lng: -84.3560,
+    lat: 33.9200, // Exact Rock Quarry Rd gate
+    lng: -84.3560, // Exact Rock Quarry Rd gate
     radius: 1.5  // Miles (1/2 mile)
   },
 
