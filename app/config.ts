@@ -20,7 +20,7 @@ export const SITE_CONFIG = {
   location: {
     lat: 33.9575,
     lng: -84.3486,
-    radius: 0.5  // Miles (1/2 mile)
+    radius: 1.5  // Miles (1/2 mile)
   },
 
   // Brivo Settings (Reference)
