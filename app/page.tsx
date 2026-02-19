@@ -80,4 +80,37 @@ export default function VisitorGate() {
               <div className="bg-transparent p-3 rounded-2xl text-slate-700">
                 <Clock size={24} />
               </div>
-              <span className="
+              <span className="text-lg font-bold text-slate-600 uppercase italic">Office Closed</span>
+            </div>
+          </div>
+        )}
+
+        {/* SECONDARY BUTTONS */}
+        <div className="grid grid-cols-1 gap-4 pt-2">
+          <a href={isBusinessHours ? officePhone : callCenterPhone} className="bg-[#111] border border-white/5 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
+            <div className="flex items-center gap-5">
+              <div className="bg-white/5 p-3 rounded-2xl text-slate-400">
+                <Package size={24} />
+              </div>
+              <span className="text-lg font-bold text-slate-300 uppercase tracking-tight">Packages</span>
+            </div>
+          </a>
+
+          <a href={isBusinessHours ? officePhone : callCenterPhone} className="bg-red-950/10 border border-red-500/20 flex items-center justify-between p-5 rounded-[2rem] active:scale-[0.97] transition-all">
+            <div className="flex items-center gap-5">
+              <div className="bg-red-500/10 p-3 rounded-2xl text-red-500">
+                <AlertTriangle size={24} />
+              </div>
+              <span className="text-lg font-bold text-red-600 uppercase tracking-tight">Emergency</span>
+            </div>
+          </a>
+        </div>
+
+      </div>
+      
+      <footer className="mt-auto py-12 text-[8px] text-slate-800 font-black tracking-[0.8em] uppercase text-center">
+        Gate Guard Security Interface
+      </footer>
+    </div>
+  );
+}
