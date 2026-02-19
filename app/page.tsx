@@ -34,18 +34,17 @@ export default function VisitorGate() {
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col items-center font-sans selection:bg-blue-600">
       
-      {/* BRANDED LOGO HEADER - WIDER ALIGNMENT */}
-      <div className="mt-6 mb-4 flex flex-col items-center w-full max-w-md">
-        <div className="relative drop-shadow-[0_0_30px_rgba(59,130,246,0.4)]">
+      {/* BRANDED LOGO HEADER - FULL WIDTH ALIGNMENT */}
+      <div className="mt-4 mb-4 flex flex-col items-center w-full max-w-md">
+        <div className="relative w-full flex justify-center drop-shadow-[0_0_35px_rgba(59,130,246,0.3)]">
             <img 
               src="/Logo.jpg" 
               alt="Gate Guard Logo" 
-              className="w-[280px] h-auto object-contain mx-auto" 
+              className="w-[92%] h-auto object-contain" 
             />
         </div>
         
-        {/* Status Badge moved slightly closer to logo */}
-        <div className={`mt-4 px-5 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 shadow-2xl ${isBusinessHours ? 'border-blue-500/50 bg-blue-500/10 text-blue-400' : 'border-slate-800 bg-slate-900/40 text-slate-500'}`}>
+        <div className={`mt-2 px-5 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 shadow-2xl ${isBusinessHours ? 'border-blue-500/50 bg-blue-500/10 text-blue-400' : 'border-slate-800 bg-slate-900/40 text-slate-500'}`}>
           <div className={`w-2 h-2 rounded-full ${isBusinessHours ? 'bg-blue-500 animate-pulse' : 'bg-slate-700'}`}></div>
           {isBusinessHours ? 'System Active' : 'Secure After-Hours'}
         </div>
