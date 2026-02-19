@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Search, Phone, ArrowLeft, Loader2 } from 'lucide-react';
+import { Search, Phone, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Directory() {
@@ -23,47 +23,75 @@ export default function Directory() {
     fetchResidents();
   }, []);
 
-  const filteredResidents = residents.filter((r: any) => 
-    r.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    r.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredResidents = residents.filter((res: any) => 
+    res.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="flex items-center mb-6">
-        <Link href="/" className="p-2 mr-2 bg-white rounded-full shadow-sm">
-          <ArrowLeft size={20} className="text-gray-600" />
+    <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col items-center font-sans">
+      {/* Header */}
+      <div className="w-full max-w-md flex items-center justify-between mb-8">
+        <Link href="/" className="p-3 bg-white/5 rounded-2xl text-slate-400">
+          <ArrowLeft size={24} />
         </Link>
-        <h1 className="text-xl font-bold text-gray-800">Resident Directory</h1>
+        <div className="flex flex-col items-end">
+          <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 italic">Resident List</span>
+          <span className="text-xs font-bold text-slate-600">Privacy Mode Active</span>
+        </div>
       </div>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+      {/* Branded Search Bar */}
+      <div className="w-full max-w-md relative mb-6">
+        <Search className="absolute left-4 top-4 text-slate-500" size={20} />
         <input 
           type="text" 
-          placeholder="Search name..." 
-          className="w-full p-3 pl-10 rounded-xl border border-gray-200 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Search by last name..." 
+          className="w-full bg-[#111] border border-white/5 p-4 pl-12 rounded-2xl text-slate-200 shadow-inner outline-none focus:border-blue-500/50 transition-all"
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-10"><Loader2 className="animate-spin text-blue-500" /></div>
+        <div className="flex flex-col items-center p-12 gap-4">
+          <Loader2 className="animate-spin text-blue-500" size={32} />
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Syncing with Gate Guard...</span>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="w-full max-w-md space-y-3">
           {filteredResidents.map((res: any) => (
-            <div key={res.id} className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border border-gray-100">
-              <div>
-                <p className="font-bold text-gray-900">{res.firstName} {res.lastName}</p>
-                <p className="text-sm text-gray-500">Resident</p>
+            <div key={res.id} className="bg-[#111] border border-white/5 p-5 rounded-[1.5rem] flex justify-between items-center group">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 font-black text-sm">
+                  {res.lastName?.[0]}
+                </div>
+                <div>
+                  {/* Shows "J. Smith" and hides unit */}
+                  <p className="text-lg font-bold text-slate-200 uppercase tracking-tight">
+                    {res.firstName?.[0]}. {res.lastName}
+                  </p>
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Verified Resident</p>
+                </div>
               </div>
-              <a href={`tel:${res.phoneNumber || '5550100'}`} className="bg-blue-100 p-3 rounded-full text-blue-600 active:bg-blue-600 active:text-white transition-colors">
-                <Phone size={20} />
+              
+              <a 
+                href={`tel:${res.phoneNumber || '7705256055'}`} 
+                className="bg-blue-600/10 p-4 rounded-2xl text-blue-500 active:bg-blue-600 active:text-white transition-all"
+              >
+                <Phone size={20} fill="currentColor" />
               </a>
             </div>
           ))}
+          
+          {filteredResidents.length === 0 && !loading && (
+            <p className="text-center text-slate-600 text-sm mt-10 italic">No residents found matching that name.</p>
+          )}
         </div>
       )}
+
+      <footer className="mt-auto py-10 flex items-center gap-2 opacity-20">
+        <ShieldCheck size={14} className="text-blue-500" />
+        <span className="text-[9px] font-black uppercase tracking-[0.4em]">Gate Guard Interface</span>
+      </footer>
     </div>
   );
 }
