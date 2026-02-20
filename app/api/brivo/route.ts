@@ -2,63 +2,60 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// Helper to get new access token using the 20-year refresh token
-async function getRefreshedToken(refreshToken: string, authHeader: string) {
-  const response = await fetch('https://auth.brivo.com/oauth/token', {
-    method: 'POST',
-    headers: { 
-      'Authorization': `Basic ${authHeader}`, 
-      'Content-Type': 'application/x-www-form-urlencoded' 
-    },
-    body: new URLSearchParams({ 
-      grant_type: 'refresh_token', 
-      refresh_token: refreshToken 
-    })
-  });
-  return await response.json();
-}
-
 export async function GET() {
+  // 1. Pull the variables from your Vercel Environment Settings
   const { 
     BRIVO_CLIENT_ID, 
     BRIVO_CLIENT_SECRET, 
     BRIVO_API_KEY, 
     BRIVO_PASSWORD, 
-    BRIVO_ADMIN_ID // This is your "Username" per Brivo's instructions
+    BRIVO_ADMIN_ID 
   } = process.env;
 
   try {
-    const authHeader = Buffer.from(`${BRIVO_CLIENT_ID}:${BRIVO_CLIENT_SECRET}`).toString('base64');
-    
-    // 1. Get Token (Initial Handshake using Admin ID)
+    // 2. Create the "Basic" Authorization string
+    // This encodes "ID:Secret" into a format like "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+    const authCredentials = `${BRIVO_CLIENT_ID}:${BRIVO_CLIENT_SECRET}`;
+    const encodedAuth = Buffer.from(authCredentials).toString('base64');
+
+    // 3. STEP 1: Get the Token (The Handshake)
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
-        'Authorization': `Basic ${authHeader}`, 
+        'Authorization': `Basic ${encodedAuth}`, 
         'Content-Type': 'application/x-www-form-urlencoded' 
       },
       body: new URLSearchParams({ 
         grant_type: 'password', 
-        username: BRIVO_ADMIN_ID || '', // PER INSTRUCTIONS: Use Admin ID here
+        username: BRIVO_ADMIN_ID || '', // Make sure this is the ADMIN ID from the circle badge
         password: BRIVO_PASSWORD || '' 
       })
     });
 
     const tokenData = await tokenResponse.json();
-    
-    // 2. Fetch Residents using the Bearer token
+
+    // Check if Step 1 failed
+    if (!tokenResponse.ok) {
+      console.error('Brivo Auth Failed:', tokenData);
+      return NextResponse.json([{ id: "err", firstName: "Auth", lastName: "Failed" }]);
+    }
+
+    // 4. STEP 2: Fetch the Users (The Data)
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
-        'Authorization': `bearer ${tokenData.access_token}`, // Case-sensitive "bearer"
+        'Authorization': `bearer ${tokenData.access_token}`, // Bearer must be lowercase or standard
         'api-key': BRIVO_API_KEY || ''
       }
     });
 
+    const data = await residentsResponse.json();
+
     if (!residentsResponse.ok) {
-      return NextResponse.json([{ id: "err", firstName: "Access", lastName: "Denied-by-Brivo" }]);
+      console.error('Brivo Data Fetch Failed:', data);
+      return NextResponse.json([{ id: "err", firstName: "API", lastName: "Denied" }]);
     }
 
-    const data = await residentsResponse.json();
+    // 5. Clean and return the data to your frontend
     const residents = (data.users || []).map((u: any) => ({
       id: u.id,
       firstName: u.firstName || "",
@@ -69,6 +66,7 @@ export async function GET() {
     return NextResponse.json(residents);
 
   } catch (error: any) {
-    return NextResponse.json([{ id: "err", firstName: "System", lastName: "Sync-Error" }]);
+    console.error('System Error:', error);
+    return NextResponse.json([{ id: "err", firstName: "System", lastName: "Error" }]);
   }
 }
