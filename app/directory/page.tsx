@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Phone, ArrowLeft, Loader2, EyeOff, ShieldCheck, X } from 'lucide-react';
-import Link from 'next/navigation'; // Using next/navigation for more reliable routing
 import { useRouter } from 'next/navigation';
 import { SITE_CONFIG } from '../config';
 
@@ -11,7 +10,7 @@ const VisitorPhoneModal = ({ isOpen, onClose, onConfirm, residentName }: any) =>
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm">
       <div className="w-full max-w-md bg-[#111] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl">
         <div className="flex justify-between items-start mb-6">
           <div>
@@ -48,16 +47,15 @@ export default function SecureDirectory() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedResident, setSelectedResident] = useState<any>(null);
 
-  // 1. PULL DATA FROM BRIVO
   useEffect(() => {
     async function fetchResidents() {
-      console.log("Fetching residents...");
       try {
-        // We add a timestamp (?t=) to force Vercel to fetch fresh data every time
-        const response = await fetch(`/api/brivo?t=${Date.now()}`, { cache: 'no-store' });
+        // FORCE RELOAD: The '?t=' and 'no-store' prevents the "Cache HIT" you saw in your logs.
+        const response = await fetch(`/api/brivo?t=${Date.now()}`, { 
+          cache: 'no-store',
+          headers: { 'Pragma': 'no-cache' } 
+        });
         const data = await response.json();
-        
-        // If data is an array, use it. If not, look for a 'users' property
         setResidents(Array.isArray(data) ? data : (data.users || []));
       } catch (e) {
         console.error("Directory fetch failed:", e);
@@ -68,7 +66,6 @@ export default function SecureDirectory() {
     fetchResidents();
   }, []);
 
-  // 2. SEARCH LOGIC
   const filteredResidents = useMemo(() => {
     if (searchTerm.length < 3) return [];
     return residents.filter((res: any) => 
@@ -94,9 +91,8 @@ export default function SecureDirectory() {
     }
   };
 
-  // --- UI RENDER (SECURITY CHECK REMOVED) ---
   return (
-    <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center font-sans">
+    <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center font-sans overflow-hidden">
       <VisitorPhoneModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
@@ -109,7 +105,7 @@ export default function SecureDirectory() {
           <ArrowLeft size={24} />
         </button>
         <div className="text-right">
-          <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 italic">Production Link</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 italic">Live Feed</span>
           <div className="text-[9px] font-bold text-slate-700 uppercase">{SITE_CONFIG.propertyName}</div>
         </div>
       </header>
@@ -123,7 +119,7 @@ export default function SecureDirectory() {
           onChange={(e) => setSearchTerm(e.target.value)} 
         />
         <p className="text-[9px] text-slate-800 mt-4 font-black uppercase tracking-[0.2em] text-center italic">
-            Enter 3+ letters to search Brivo directory
+            Search by First or Last Name
         </p>
       </div>
 
@@ -131,16 +127,16 @@ export default function SecureDirectory() {
         {loading ? (
           <div className="flex flex-col items-center mt-12 gap-4">
             <Loader2 className="animate-spin text-blue-600" size={30} />
-            <span className="text-[9px] font-black uppercase text-slate-800 tracking-[0.3em]">Connecting to Brivo...</span>
+            <span className="text-[9px] font-black uppercase text-slate-800 tracking-[0.3em]">Syncing Brivo...</span>
           </div>
         ) : filteredResidents.map((res: any) => (
-          <div key={res.id} className="bg-[#0a0a0a] border border-white/5 p-5 rounded-[2rem] flex justify-between items-center animate-in fade-in zoom-in-95 duration-500">
+          <div key={res.id} className="bg-[#0a0a0a] border border-white/5 p-5 rounded-[2rem] flex justify-between items-center transition-all animate-in fade-in zoom-in-95 duration-500">
             <div className="flex items-center gap-4">
-              <div className="w-11 h-11 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 font-black text-sm">
+              <div className="w-11 h-11 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 font-black text-sm border border-blue-500/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]">
                 {res.lastName?.[0]}
               </div>
               <div>
-                <p className="text-lg font-black text-slate-200 uppercase tracking-tighter italic">{res.firstName} {res.lastName}</p>
+                <p className="text-lg font-black text-slate-200 uppercase tracking-tighter italic leading-none">{res.firstName} {res.lastName}</p>
                 <div className="flex items-center gap-1 text-[9px] font-black text-slate-700 uppercase tracking-widest mt-1">
                   <EyeOff size={10} /> Caller ID Protected
                 </div>
@@ -149,7 +145,7 @@ export default function SecureDirectory() {
             <button 
               onClick={() => { setSelectedResident(res); setIsModalOpen(true); }}
               disabled={callingId === res.id}
-              className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg active:scale-95 disabled:opacity-50"
+              className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg active:scale-95 disabled:opacity-50 transition-all"
             >
               {callingId === res.id ? <Loader2 className="animate-spin" size={20} /> : <Phone size={20} fill="currentColor" />}
             </button>
@@ -158,7 +154,7 @@ export default function SecureDirectory() {
 
         {searchTerm.length >= 3 && filteredResidents.length === 0 && !loading && (
           <div className="text-center py-20 border border-dashed border-white/5 rounded-[2.5rem] opacity-30">
-            <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">No Residents Found</p>
+            <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">No Matching Residents</p>
           </div>
         )}
       </div>
