@@ -3,20 +3,20 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  console.log("--- STARTING LIVE BRIVO SYNC ---");
-
+  // Pulling every single credential from the secure Vercel vault
   const { 
     BRIVO_CLIENT_ID, 
     BRIVO_CLIENT_SECRET, 
     BRIVO_API_KEY,
     BRIVO_USERNAME,
-    BRIVO_PASSWORD 
+    BRIVO_PASSWORD,
+    BRIVO_ADMIN_ID // We added this for scalability
   } = process.env;
 
   try {
     const authHeader = Buffer.from(`${BRIVO_CLIENT_ID}:${BRIVO_CLIENT_SECRET}`).toString('base64');
     
-    // Attempting login with the standard Brivo OAuth endpoint
+    // 1. Authenticate using Password Grant
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: {
@@ -30,27 +30,27 @@ export async function GET() {
       })
     });
 
-    // If the login fails (401), we stop and show a clear error in the logs
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
-      console.error("BRIVO_AUTH_FAILED: Status " + tokenResponse.status);
-      return NextResponse.json({ error: "Check Brivo Credentials in Vercel" }, { status: 401 });
+      const errorText = await tokenResponse.text();
+      console.error("BRIVO_AUTH_FAILED: " + tokenResponse.status + " - " + errorText);
+      return NextResponse.json({ error: "Authentication Failed" }, { status: 401 });
     }
 
     const tokenData = await tokenResponse.json();
-    console.log("Token Status: Success (200)");
 
-    // Fetch the actual Users
+    // 2. Fetch Residents using the Scalable Admin ID
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
-        'api-key': BRIVO_API_KEY || ''
+        'api-key': BRIVO_API_KEY || '',
+        'x-brivo-admin-id': BRIVO_ADMIN_ID || '' // Scalable ID
       }
     });
 
     const data = await residentsResponse.json();
     const list = data.users || [];
 
+    // 3. Map to your high-end directory UI format
     return NextResponse.json(list.map((u: any) => ({
       id: u.id,
       firstName: u.firstName || "",
@@ -60,6 +60,6 @@ export async function GET() {
 
   } catch (error: any) {
     console.error("BRIDGE_CRASH:", error.message);
-    return NextResponse.json({ error: "Connection Error" }, { status: 500 });
+    return NextResponse.json({ error: "System Connection Error" }, { status: 500 });
   }
 }
