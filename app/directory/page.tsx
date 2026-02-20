@@ -18,7 +18,9 @@ const VisitorPhoneModal = ({ isOpen, onClose, onConfirm, residentName }: any) =>
             <h3 className="text-xl font-black uppercase italic tracking-tighter text-blue-500">Connect to Resident</h3>
             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Calling {residentName}</p>
           </div>
-          <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-slate-500 hover:text-white"><X size={20}/></button>
+          <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-slate-500 hover:text-white transition-colors hover:bg-white/10">
+            <X size={20}/>
+          </button>
         </div>
 
         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
@@ -28,7 +30,7 @@ const VisitorPhoneModal = ({ isOpen, onClose, onConfirm, residentName }: any) =>
         <input 
           type="tel" 
           placeholder="(770) 000-0000"
-          className="w-full bg-black border border-white/5 p-5 rounded-2xl text-2xl text-center font-black tracking-widest text-white outline-none focus:border-blue-500/50 transition-all mb-6"
+          className="w-full bg-black border border-white/10 p-5 rounded-2xl text-2xl text-center font-black tracking-widest text-white outline-none focus:border-blue-500/50 transition-all mb-6 shadow-inner"
           value={number}
           onChange={(e) => setNumber(e.target.value)}
         />
@@ -36,7 +38,7 @@ const VisitorPhoneModal = ({ isOpen, onClose, onConfirm, residentName }: any) =>
         <button 
           onClick={() => onConfirm(number)}
           disabled={number.length < 10}
-          className="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase tracking-[0.2em] italic text-sm hover:bg-blue-500 transition-all active:scale-95 disabled:opacity-30"
+          className="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase tracking-[0.2em] italic text-sm hover:bg-blue-500 transition-all active:scale-95 disabled:opacity-30 shadow-[0_0_20px_rgba(37,99,235,0.3)]"
         >
           Initiate Secure Call
         </button>
@@ -67,52 +69,67 @@ export default function SecureDirectory() {
     return R * c;
   };
 
-useEffect(() => {
-  // 1. SET A MANUAL KILL-SWITCH (10 Seconds)
-  const pinwheelTimer = setTimeout(() => {
-    if (isWithinRange === null) {
-      console.log("GPS timed out - Forcing Pinwheel to stop.");
+  useEffect(() => {
+    // 1. SET A MANUAL KILL-SWITCH (10 Seconds)
+    const pinwheelTimer = setTimeout(() => {
+      if (isWithinRange === null) {
+        console.log("GPS timed out - Forcing Pinwheel to stop.");
+        setIsWithinRange(false);
+      }
+    }, 10000);
+
+    const geoOptions = {
+      enableHighAccuracy: true,
+      timeout: 8000, // Browser-level timeout
+      maximumAge: 0
+    };
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(pinwheelTimer);
+          const dist = getDistance(
+            position.coords.latitude, 
+            position.coords.longitude, 
+            SITE_CONFIG.location.lat, 
+            SITE_CONFIG.location.lng
+          );
+          setIsWithinRange(dist <= SITE_CONFIG.location.radius);
+        },
+        (error) => {
+          clearTimeout(pinwheelTimer);
+          console.error("GPS Error:", error.message);
+          setIsWithinRange(false);
+        },
+        geoOptions
+      );
+    } else {
+      clearTimeout(pinwheelTimer);
       setIsWithinRange(false);
     }
-  }, 10000);
 
-  const geoOptions = {
-    enableHighAccuracy: true,
-    timeout: 8000, // Browser-level timeout
-    maximumAge: 0
-  };
+    // Fetch Residents (Dummy or Brivo)
+    async function fetchResidents() {
+      try {
+        const response = await fetch('/api/brivo');
+        const data = await response.json();
+        setResidents(Array.isArray(data) ? data : (data?.data || []));
+      } catch (e) {
+        console.error("Brivo fetch error:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchResidents();
 
-  if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        clearTimeout(pinwheelTimer); // Stop the manual timer if GPS works
-        const dist = getDistance(
-          position.coords.latitude, 
-          position.coords.longitude, 
-          SITE_CONFIG.location.lat, 
-          SITE_CONFIG.location.lng
-        );
-        setIsWithinRange(dist <= SITE_CONFIG.location.radius);
-      },
-      (error) => {
-        clearTimeout(pinwheelTimer);
-        console.error("GPS Error:", error.message);
-        setIsWithinRange(false); // Stop pinwheel on error
-      },
-      geoOptions
-    );
-  } else {
-    clearTimeout(pinwheelTimer);
-    setIsWithinRange(false);
-  }
-
-  // Cleanup timer if the user leaves the page
-  return () => clearTimeout(pinwheelTimer);
-}, []);
+    return () => clearTimeout(pinwheelTimer);
+  }, []);
 
   const filteredResidents = useMemo(() => {
     if (searchTerm.length < 3) return [];
-    return residents.filter((res: any) => res?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()));
+    return residents.filter((res: any) => 
+      res?.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   }, [residents, searchTerm]);
 
   const triggerCallModal = (res: any) => {
@@ -137,7 +154,7 @@ useEffect(() => {
           alert("Connection initiated. Your phone will ring shortly. Answer it to speak with the resident.");
       }
     } catch (e) {
-      alert("System busy. Please try again.");
+      alert("Secure bridge is busy. Please try again.");
     } finally {
       setCallingId(null);
     }
@@ -146,19 +163,21 @@ useEffect(() => {
   // Lock Screen if not at Eagles Landing
   if (isWithinRange === false) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white p-8 flex flex-col items-center justify-center text-center">
-        <Lock size={48} className="text-red-600 mb-6" />
+      <div className="min-h-screen bg-black text-white p-8 flex flex-col items-center justify-center text-center">
+        <div className="bg-red-600/10 p-6 rounded-full border border-red-600/20 mb-6 shadow-[0_0_30px_rgba(220,38,38,0.2)]">
+          <Lock size={48} className="text-red-600" />
+        </div>
         <h2 className="text-2xl font-black uppercase italic tracking-tighter">Site Authentication Failed</h2>
-        <p className="text-slate-500 mt-4 text-sm max-w-xs leading-relaxed">
-            The resident directory is only accessible to guests physically located at {SITE_CONFIG.propertyName}.
+        <p className="text-slate-500 mt-4 text-sm max-w-xs leading-relaxed uppercase tracking-widest font-bold">
+            Access restricted to on-site guests at {SITE_CONFIG.propertyName}.
         </p>
-        <Link href="/" className="mt-8 text-blue-500 font-bold uppercase text-[10px] tracking-widest border-b border-blue-500 pb-1">Return Home</Link>
+        <Link href="/" className="mt-12 text-blue-500 font-bold uppercase text-[10px] tracking-[0.4em] border-b border-blue-500/30 pb-1">Return Home</Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col items-center font-sans overflow-hidden">
+    <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center font-sans overflow-hidden">
       <VisitorPhoneModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
@@ -167,41 +186,43 @@ useEffect(() => {
       />
 
       <header className="w-full max-w-md flex items-center justify-between mb-8">
-        <Link href="/" className="p-3 bg-white/5 rounded-2xl text-slate-400 transition-colors hover:text-white"><ArrowLeft size={24} /></Link>
+        <Link href="/" className="p-3 bg-white/5 rounded-2xl text-slate-400 hover:text-white transition-all active:scale-90 shadow-lg">
+          <ArrowLeft size={24} />
+        </Link>
         <div className="text-right">
-          <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 italic">Access Terminal</span>
-          <div className="flex items-center justify-end gap-1 text-[9px] font-bold text-slate-600 uppercase tracking-tighter">Secure Link Active</div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 italic">Secure Link</span>
+          <div className="flex items-center justify-end gap-1 text-[9px] font-bold text-slate-700 uppercase tracking-tighter">Portal Active</div>
         </div>
       </header>
 
       <div className="w-full max-w-md relative mb-12">
-        <Search className="absolute left-4 top-5 text-slate-600" size={20} />
+        <Search className="absolute left-4 top-5 text-slate-700" size={20} />
         <input 
           type="text" 
-          placeholder="Search by Last Name..." 
-          className="w-full bg-[#111] border border-white/5 p-5 pl-12 rounded-2xl text-slate-200 outline-none focus:border-blue-500/30 font-bold placeholder:text-slate-800 transition-all"
+          placeholder="Search Residents..." 
+          className="w-full bg-[#0a0a0a] border border-white/5 p-5 pl-12 rounded-2xl text-slate-200 outline-none focus:border-blue-500/30 font-bold placeholder:text-slate-800 transition-all shadow-[0_0_30px_rgba(37,99,235,0.05)]"
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <p className="text-[9px] text-slate-800 mt-4 font-black uppercase tracking-[0.2em] text-center">Type 3+ letters to search</p>
+        <p className="text-[9px] text-slate-800 mt-4 font-black uppercase tracking-[0.2em] text-center italic">Type 3+ letters to reveal</p>
       </div>
 
       {loading || isWithinRange === null ? (
           <div className="flex flex-col items-center mt-12 gap-4">
               <Loader2 className="animate-spin text-blue-600" size={40} />
-              <span className="text-[9px] font-black uppercase text-slate-700 tracking-[0.3em]">Validating Site Access...</span>
+              <span className="text-[9px] font-black uppercase text-slate-800 tracking-[0.3em]">Validating Site Proximity...</span>
           </div>
       ) : (
         <div className="w-full max-w-md space-y-3">
           {filteredResidents.map((res: any) => (
-            <div key={res.id} className="bg-[#0f0f0f] border border-white/5 p-5 rounded-[2rem] flex justify-between items-center transition-all animate-in fade-in slide-in-from-bottom-2">
+            <div key={res.id} className="bg-[#0a0a0a] border border-white/5 p-5 rounded-[2rem] flex justify-between items-center transition-all animate-in fade-in zoom-in-95 duration-500">
               <div className="flex items-center gap-4">
-                <div className="w-11 h-11 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 font-black text-sm">
+                <div className="w-11 h-11 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 font-black text-sm border border-blue-500/20">
                     {res.lastName?.[0]}
                 </div>
                 <div>
-                  <p className="text-lg font-black text-slate-200 uppercase tracking-tighter italic">{res.firstName?.[0]}. {res.lastName}</p>
-                  <div className="flex items-center gap-1 text-[9px] font-black text-slate-700 uppercase tracking-widest">
-                      <EyeOff size={10} /> Caller ID Protected
+                  <p className="text-lg font-black text-slate-200 uppercase tracking-tighter italic leading-none">{res.firstName?.[0]}. {res.lastName}</p>
+                  <div className="flex items-center gap-1 text-[9px] font-black text-slate-700 uppercase tracking-widest mt-1">
+                      <EyeOff size={10} /> Secure Bridge
                   </div>
                 </div>
               </div>
@@ -209,7 +230,7 @@ useEffect(() => {
               <button 
                 onClick={() => triggerCallModal(res)}
                 disabled={callingId === res.id}
-                className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                className="bg-blue-600 p-4 rounded-2xl text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95 transition-all disabled:opacity-50"
               >
                 {callingId === res.id ? <Loader2 className="animate-spin" size={20} /> : <Phone size={20} fill="currentColor" />}
               </button>
@@ -217,16 +238,16 @@ useEffect(() => {
           ))}
 
           {searchTerm.length >= 3 && filteredResidents.length === 0 && (
-              <div className="text-center py-20 bg-white/[0.01] rounded-[2.5rem] border border-dashed border-white/5 opacity-50">
-                  <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">No Matching Residents Found</p>
+              <div className="text-center py-20 border border-dashed border-white/5 rounded-[2.5rem] opacity-30">
+                  <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">No Matching Residents</p>
               </div>
           )}
         </div>
       )}
       
-      <footer className="mt-auto py-10 opacity-10 flex items-center gap-2">
+      <footer className="mt-auto py-8 opacity-20 flex items-center justify-center gap-2">
           <ShieldCheck size={12} className="text-blue-500" />
-          <span className="text-[8px] font-black uppercase tracking-[0.5em]">{SITE_CONFIG.brandName} Secure Directory</span>
+          <span className="text-[8px] font-black uppercase tracking-[0.5em]">{SITE_CONFIG.brandName} Secure Interface</span>
       </footer>
     </div>
   );
