@@ -18,8 +18,8 @@ export const SITE_CONFIG = {
 
   // Geofencing Coordinates (Elevate Eagles Landing)
   location: {
-    lat: 33.9200, // Exact Rock Quarry Rd gate
-    lng: -84.3560, // Exact Rock Quarry Rd gate
+    lat: 34.3615, // Exact Rock Quarry Rd gate
+    lng: -84.3978, // Exact Rock Quarry Rd gate
     radius: 1.5  // Miles (1/2 mile)
   },
 
