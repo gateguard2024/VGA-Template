@@ -15,7 +15,7 @@ export async function GET() {
   try {
     const authHeader = Buffer.from(`${BRIVO_CLIENT_ID}:${BRIVO_CLIENT_SECRET}`).toString('base64');
     
-    // 1. Get Token (Working based on your 200 OK logs)
+    // 1. Get Token (HANDSHAKE)
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
@@ -31,7 +31,7 @@ export async function GET() {
 
     const tokenData = await tokenResponse.json();
 
-    // 2. Fetch Residents
+    // 2. Fetch Residents (DATA REQUEST)
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
@@ -40,11 +40,11 @@ export async function GET() {
       }
     });
 
-    // 3. CRITICAL ERROR HANDLING (For that 403 Forbidden error)
+    // 3. HANDLE PERMISSION DENIED (403 ERROR)
     if (!residentsResponse.ok) {
-      console.error(`BRIVO_ACCESS_ERROR: ${residentsResponse.status}. Check API permissions in Brivo Portal.`);
+      console.error(`BRIVO_ERROR: ${residentsResponse.status}`);
       
-      // We send this specific message so you see it in the app search
+      // If Brivo blocks the list, show this clear message in the app search
       return NextResponse.json([{ 
         id: "err", 
         firstName: "Access", 
@@ -55,7 +55,7 @@ export async function GET() {
     const data = await residentsResponse.json();
     const list = data.users || [];
     
-    // 4. Clean Mapping for your Directory UI
+    // 4. Clean Mapping for the Directory
     const residents = list.map((u: any) => ({
       id: u.id,
       firstName: u.firstName || "",
@@ -73,5 +73,4 @@ export async function GET() {
       lastName: "Sync-Error" 
     }]);
   }
-}
 }
