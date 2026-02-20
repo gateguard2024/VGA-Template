@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { SITE_CONFIG } from '../config';
 
 // --- STYLISH PHONE BRIDGE MODAL ---
+// This is the popup that appears when a visitor clicks the phone icon.
 const VisitorPhoneModal = ({ isOpen, onClose, onConfirm, residentName }: any) => {
   const [number, setNumber] = useState('');
   if (!isOpen) return null;
@@ -52,8 +53,9 @@ export default function SecureDirectory() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedResident, setSelectedResident] = useState<any>(null);
 
+  // Calculates if the user is at the gate
   const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 3958.8;
+    const R = 3958.8; // Radius of Earth in miles
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -63,6 +65,7 @@ export default function SecureDirectory() {
   };
 
   useEffect(() => {
+    // Kill the loader if GPS takes too long
     const pinwheelTimer = setTimeout(() => {
       if (isWithinRange === null) setIsWithinRange(false);
     }, 8000);
@@ -85,13 +88,14 @@ export default function SecureDirectory() {
       setIsWithinRange(false);
     }
 
+    // This pulls your residents from the Brivo bridge
     async function fetchResidents() {
       try {
         const response = await fetch('/api/brivo', { cache: 'no-store' });
         const data = await response.json();
         setResidents(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error(e);
+        console.error("Fetch error:", e);
       } finally {
         setLoading(false);
       }
@@ -100,6 +104,7 @@ export default function SecureDirectory() {
     return () => clearTimeout(pinwheelTimer);
   }, []);
 
+  // Filter logic for the search bar
   const filteredResidents = useMemo(() => {
     if (searchTerm.length < 3) return [];
     return residents.filter((res: any) => 
@@ -124,58 +129,76 @@ export default function SecureDirectory() {
       });
       alert("Bridge active. Your phone will ring shortly.");
     } catch (e) {
-      alert("Error. Try again.");
+      alert("Error initiating call. Try again.");
     } finally {
       setCallingId(null);
     }
   };
 
+  // --- UI STATES ---
+
+  // 1. Validating (The Loader)
   if (isWithinRange === null) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-6">
         <Loader2 className="animate-spin text-blue-600" size={48} />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500">Validating Site Access...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500 animate-pulse">Authenticating Site...</p>
       </div>
     );
   }
 
+  // 2. Off-site (The Lock Screen)
   if (isWithinRange === false) {
     return (
       <div className="min-h-screen bg-black text-white p-8 flex flex-col items-center justify-center text-center">
-        <Lock size={48} className="text-red-600 mb-6" />
-        <h2 className="text-2xl font-black uppercase italic">Access Denied</h2>
-        <p className="text-slate-500 mt-4 text-sm uppercase font-bold italic">On-Site Proximity Required</p>
+        <div className="bg-red-600/10 p-6 rounded-full border border-red-600/20 mb-6 shadow-[0_0_30px_rgba(220,38,38,0.2)]">
+          <Lock size={48} className="text-red-600" />
+        </div>
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter">Access Denied</h2>
+        <p className="text-slate-500 mt-4 text-sm uppercase font-bold italic tracking-widest">On-Site Proximity Required</p>
         <button onClick={() => setIsWithinRange(true)} className="mt-12 text-[8px] text-slate-800 font-black uppercase tracking-[0.3em] border border-white/5 px-4 py-2 rounded-full">Developer Bypass</button>
       </div>
     );
   }
 
+  // 3. Success (The Directory)
   return (
     <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center font-sans overflow-hidden">
       <VisitorPhoneModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handlePrivacyCall} residentName={selectedResident ? `${selectedResident.firstName?.[0]}. ${selectedResident.lastName}` : ''} />
+      
       <header className="w-full max-w-md flex items-center justify-between mb-8 pt-4">
-        <Link href="/" className="p-3 bg-white/5 rounded-2xl text-slate-400 active:scale-90 shadow-lg"><ArrowLeft size={24} /></Link>
+        <Link href="/" className="p-3 bg-white/5 rounded-2xl text-slate-400 active:scale-90 transition-all shadow-lg"><ArrowLeft size={24} /></Link>
         <div className="text-right">
           <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 italic">Secure Link</span>
-          <div className="text-[9px] font-bold text-slate-700 uppercase">Portal Active</div>
+          <div className="text-[9px] font-bold text-slate-700 uppercase">{SITE_CONFIG.propertyName}</div>
         </div>
       </header>
+
       <div className="w-full max-w-md relative mb-12">
         <Search className="absolute left-4 top-5 text-slate-700" size={20} />
-        <input type="text" placeholder="Search Residents..." className="w-full bg-[#0a0a0a] border border-white/5 p-5 pl-12 rounded-2xl text-slate-200 outline-none focus:border-blue-500/30 font-bold placeholder:text-slate-800 shadow-[0_0_30px_rgba(37,99,235,0.05)]" onChange={(e) => setSearchTerm(e.target.value)} />
-        <p className="text-[9px] text-slate-800 mt-4 font-black uppercase tracking-[0.2em] text-center italic">Type 3+ letters (Try 'Ada' for Cheryl Adams)</p>
+        <input 
+          type="text" 
+          placeholder="Search Residents..." 
+          className="w-full bg-[#0a0a0a] border border-white/5 p-5 pl-12 rounded-2xl text-slate-200 outline-none focus:border-blue-500/30 font-bold placeholder:text-slate-800 transition-all shadow-[0_0_30px_rgba(37,99,235,0.05)]" 
+          onChange={(e) => setSearchTerm(e.target.value)} 
+        />
+        <p className="text-[9px] text-slate-800 mt-4 font-black uppercase tracking-[0.2em] text-center italic">Type 3+ letters (e.g., 'Ada' for Adams)</p>
       </div>
+
       <div className="w-full max-w-md space-y-3">
         {loading ? (
           <div className="flex flex-col items-center mt-12 gap-4">
             <Loader2 className="animate-spin text-blue-600/40" size={30} />
-            <span className="text-[9px] font-black uppercase text-slate-800 tracking-[0.3em]">Syncing Directory...</span>
+            <span className="text-[9px] font-black uppercase text-slate-800 tracking-[0.3em]">Syncing...</span>
           </div>
         ) : filteredResidents.map((res: any) => (
           <div key={res.id} className="bg-[#0a0a0a] border border-white/5 p-5 rounded-[2rem] flex justify-between items-center transition-all animate-in fade-in zoom-in-95 duration-500">
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 font-black text-sm border border-blue-500/20">{res.lastName?.[0]}</div>
-              <div><p className="text-lg font-black text-slate-200 uppercase tracking-tighter italic">{res.firstName} {res.lastName}</p></div>
+              <div>
+                <p className="text-lg font-black text-slate-200 uppercase tracking-tighter italic leading-none">{res.firstName} {res.lastName}</p>
+                <div className="flex items-center gap-1 text-[9px] font-black text-slate-700 uppercase tracking-widest mt-1"><EyeOff size={10} /> Secure Bridge</div>
+              </div>
             </div>
             <button onClick={() => triggerCallModal(res)} disabled={callingId === res.id} className="bg-blue-600 p-4 rounded-2xl text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95 disabled:opacity-50">
               {callingId === res.id ? <Loader2 className="animate-spin" size={20} /> : <Phone size={20} fill="currentColor" />}
@@ -183,7 +206,11 @@ export default function SecureDirectory() {
           </div>
         ))}
       </div>
-      <footer className="mt-auto py-8 opacity-20 flex items-center justify-center gap-2"><ShieldCheck size={12} className="text-blue-500" /><span className="text-[8px] font-black uppercase tracking-[0.5em]">{SITE_CONFIG.brandName} Secure Interface</span></footer>
+
+      <footer className="mt-auto py-8 opacity-20 flex items-center justify-center gap-2">
+        <ShieldCheck size={12} className="text-blue-500" />
+        <span className="text-[8px] font-black uppercase tracking-[0.5em]">{SITE_CONFIG.brandName} Secure Interface</span>
+      </footer>
     </div>
   );
 }
