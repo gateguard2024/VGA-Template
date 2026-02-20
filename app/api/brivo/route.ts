@@ -27,15 +27,15 @@ export async function GET() {
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json();
-      console.error("Brivo Auth Failed:", errorData);
-      throw new Error("Invalid Brivo Credentials");
+      const errorText = await tokenResponse.text();
+      console.error("Brivo Auth Failed:", errorText);
+      return NextResponse.json({ error: "Auth Failed", details: errorText }, { status: 401 });
     }
 
     const { access_token } = await tokenResponse.json();
 
-    // 2. Fetch the User Directory for Elevate Eagles Landing
-    // We fetch up to 100 users to ensure the directory is populated
+    // 2. Fetch the User Directory
+    // Note: We use the pageSize=100 and check the global user list first
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
         'Authorization': `Bearer ${access_token}`,
@@ -44,21 +44,31 @@ export async function GET() {
     });
 
     const data = await residentsResponse.json();
-    const userList = data.users || [];
+    
+    // --- DIAGNOSTIC LOGGING ---
+    // This will appear in your Vercel 'Logs' tab. Check here if users are missing.
+    console.log("BRIVO API RESPONSE:", JSON.stringify(data));
+
+    // Handle different Brivo API response structures
+    const userList = data.users || data.data || (Array.isArray(data) ? data : []);
+
+    if (userList.length === 0) {
+      console.warn("Brivo returned an empty user list. Check if users are 'Active' in Brivo.");
+    }
 
     // 3. Map Brivo data to our UI format
     const residents = userList.map((u: any) => ({
-      id: u.id,
+      id: u.id || Math.random().toString(),
       firstName: u.firstName || "",
       lastName: u.lastName || "Resident",
-      phoneNumber: u.phoneNumbers?.[0]?.number || "" // Grabs primary phone
+      // Look for any available phone number field
+      phoneNumber: u.phoneNumbers?.[0]?.number || u.phone || u.mobile || "" 
     }));
 
     return NextResponse.json(residents);
 
   } catch (error: any) {
-    console.error("Brivo Bridge Error:", error.message);
-    // Return an empty array so the directory doesn't crash
-    return NextResponse.json([]);
+    console.error("Bridge Error:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
