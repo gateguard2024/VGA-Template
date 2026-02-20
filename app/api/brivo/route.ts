@@ -20,17 +20,17 @@ export async function GET() {
 
     // 3. STEP 1: Get the Token (The Handshake)
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
-      method: 'POST',
-      headers: { 
-        'Authorization': `Basic ${encodedAuth}`, 
-        'Content-Type': 'application/x-www-form-urlencoded' 
-      },
-      body: new URLSearchParams({ 
-        grant_type: 'password', 
-        username: BRIVO_ADMIN_ID || '', // Make sure this is the ADMIN ID from the circle badge
-        password: BRIVO_PASSWORD || '' 
-      })
-    });
+  method: 'POST',
+  headers: { 
+    'Authorization': `Basic ${authHeader}`, 
+    'Content-Type': 'application/x-www-form-urlencoded' 
+  },
+  body: new URLSearchParams({ 
+    grant_type: 'password', 
+    username: BRIVO_ADMIN_ID || '', // PER BRIVO EMAIL: Use Admin ID here, not email
+    password: BRIVO_PASSWORD || '' 
+  })
+});
 
     const tokenData = await tokenResponse.json();
 
