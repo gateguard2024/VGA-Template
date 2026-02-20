@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 
-// This line tells Vercel: "DO NOT CACHE THIS. RUN IT FRESH EVERY TIME."
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  // This will show up in your logs so we know the server is actually working
   console.log("--- STARTING LIVE BRIVO SYNC ---");
 
   const { 
@@ -18,7 +16,7 @@ export async function GET() {
   try {
     const authHeader = Buffer.from(`${BRIVO_CLIENT_ID}:${BRIVO_CLIENT_SECRET}`).toString('base64');
     
-    // 1. Authenticate with Brivo
+    // Attempting login with the standard Brivo OAuth endpoint
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: {
@@ -32,10 +30,17 @@ export async function GET() {
       })
     });
 
-    const tokenData = await tokenResponse.json();
-    console.log("Token Status:", tokenResponse.status);
+    // If the login fails (401), we stop and show a clear error in the logs
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.text();
+      console.error("BRIVO_AUTH_FAILED: Status " + tokenResponse.status);
+      return NextResponse.json({ error: "Check Brivo Credentials in Vercel" }, { status: 401 });
+    }
 
-    // 2. Fetch the Users
+    const tokenData = await tokenResponse.json();
+    console.log("Token Status: Success (200)");
+
+    // Fetch the actual Users
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
@@ -44,10 +49,8 @@ export async function GET() {
     });
 
     const data = await residentsResponse.json();
-    console.log("Users Found:", data?.users?.length || 0);
-
-    // 3. Return the names to your phone
     const list = data.users || [];
+
     return NextResponse.json(list.map((u: any) => ({
       id: u.id,
       firstName: u.firstName || "",
@@ -56,7 +59,7 @@ export async function GET() {
     })));
 
   } catch (error: any) {
-    console.error("CRITICAL ERROR:", error.message);
-    return NextResponse.json({ error: "Sync Failed" });
+    console.error("BRIDGE_CRASH:", error.message);
+    return NextResponse.json({ error: "Connection Error" }, { status: 500 });
   }
 }
