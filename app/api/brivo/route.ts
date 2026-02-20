@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+// This tells Vercel not to cache this API call
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
@@ -12,11 +13,11 @@ export async function GET() {
   } = process.env;
 
   try {
-    // 1. Create the Basic Auth Header
-    // Note: Ensure BRIVO_CLIENT_ID and BRIVO_CLIENT_SECRET have no spaces in Vercel settings
-    const authHeader = Buffer.from(`${BRIVO_CLIENT_ID}:${BRIVO_CLIENT_SECRET}`).toString('base64');
+    // 1. Create the Basic Auth Header (Base64 encoding ID and Secret)
+    const credentials = `${BRIVO_CLIENT_ID?.trim()}:${BRIVO_CLIENT_SECRET?.trim()}`;
+    const authHeader = Buffer.from(credentials).toString('base64');
     
-    // 2. Get Token (HANDSHAKE)
+    // STEP 1: LOGIN (The Handshake)
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
@@ -25,24 +26,25 @@ export async function GET() {
       },
       body: new URLSearchParams({ 
         grant_type: 'password', 
-        username: BRIVO_ADMIN_ID || '', // PER INSTRUCTIONS: Use the numeric Admin ID
-        password: BRIVO_PASSWORD || '' 
+        username: String(BRIVO_ADMIN_ID || '').trim(), 
+        password: String(BRIVO_PASSWORD || '').trim() 
       })
     });
 
     const tokenData = await tokenResponse.json();
 
+    // If this part fails, we stop and log the error
     if (!tokenResponse.ok) {
-      console.error('Brivo Login Rejected:', tokenData);
+      console.error('--- DEBUG BRIVO LOGIN ---');
+      console.error('Brivo Response:', tokenData);
       return NextResponse.json([{ id: "err", firstName: "Login", lastName: "Rejected" }]);
     }
 
-    // 3. Fetch Residents (DATA REQUEST)
-    // PER INSTRUCTIONS: Use lowercase 'bearer' and include 'api-key'
+    // STEP 2: GET USERS (The Data Request)
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
-        'Authorization': `bearer ${tokenData.access_token}`,
-        'api-key': BRIVO_API_KEY || ''
+        'Authorization': `bearer ${tokenData.access_token}`, // Lowercase 'bearer' per instructions
+        'api-key': String(BRIVO_API_KEY || '').trim()
       }
     });
 
@@ -51,6 +53,8 @@ export async function GET() {
     }
 
     const data = await residentsResponse.json();
+    
+    // Map the Brivo data format to what your Directory UI expects
     const residents = (data.users || []).map((u: any) => ({
       id: u.id,
       firstName: u.firstName || "",
@@ -61,6 +65,7 @@ export async function GET() {
     return NextResponse.json(residents);
 
   } catch (error: any) {
+    console.error('CRITICAL SYSTEM ERROR:', error);
     return NextResponse.json([{ id: "err", firstName: "System", lastName: "Error" }]);
   }
 }
