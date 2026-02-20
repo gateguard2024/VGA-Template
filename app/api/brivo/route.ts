@@ -12,10 +12,11 @@ export async function GET() {
   } = process.env;
 
   try {
-    // FIX: authHeader must be defined before use to prevent build errors
+    // 1. Create the Basic Auth Header
+    // Note: Ensure BRIVO_CLIENT_ID and BRIVO_CLIENT_SECRET have no spaces in Vercel settings
     const authHeader = Buffer.from(`${BRIVO_CLIENT_ID}:${BRIVO_CLIENT_SECRET}`).toString('base64');
     
-    // 1. Initial Handshake (OAuth Token)
+    // 2. Get Token (HANDSHAKE)
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
@@ -24,7 +25,7 @@ export async function GET() {
       },
       body: new URLSearchParams({ 
         grant_type: 'password', 
-        username: BRIVO_ADMIN_ID || '', // PER INSTRUCTIONS: Use Admin ID
+        username: BRIVO_ADMIN_ID || '', // PER INSTRUCTIONS: Use the numeric Admin ID
         password: BRIVO_PASSWORD || '' 
       })
     });
@@ -36,8 +37,8 @@ export async function GET() {
       return NextResponse.json([{ id: "err", firstName: "Login", lastName: "Rejected" }]);
     }
 
-    // 2. Fetch Residents
-    // PER INSTRUCTIONS: Use 'bearer' (lowercase) and 'api-key' header
+    // 3. Fetch Residents (DATA REQUEST)
+    // PER INSTRUCTIONS: Use lowercase 'bearer' and include 'api-key'
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
         'Authorization': `bearer ${tokenData.access_token}`,
@@ -50,7 +51,6 @@ export async function GET() {
     }
 
     const data = await residentsResponse.json();
-    
     const residents = (data.users || []).map((u: any) => ({
       id: u.id,
       firstName: u.firstName || "",
