@@ -3,33 +3,26 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const { 
-    BRIVO_BASIC_AUTH, // Pulling the perfect string from Postman
-    BRIVO_API_KEY, 
-    BRIVO_PASSWORD, 
-    BRIVO_ADMIN_ID 
-  } = process.env;
+  // We still need the API Key from Vercel for the second step
+  const BRIVO_API_KEY = process.env.BRIVO_API_KEY || '';
 
   try {
-    if (!BRIVO_BASIC_AUTH) {
-      console.error('Missing BRIVO_BASIC_AUTH in Vercel Variables!');
-      return NextResponse.json([{ id: "err", firstName: "Setup", lastName: "Missing-Auth" }]);
-    }
-
-    // STEP 1: LOGIN (Using Postman's exact Base64 string)
+    // STEP 1: LOGIN (The Handshake)
+    // We are HARDCODING the exact Base64 string and credentials from your successful Postman trace!
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
-        'Authorization': `Basic ${BRIVO_BASIC_AUTH.trim()}`, 
+        // This is the EXACT string from your Postman logs
+        'Authorization': 'Basic M2ZkMTU2MTYtMTEwOS00NWM3LTlhM2EtZTFiOGJkZGFhMDY0OndNd1hrNDZ6d1c3MHc4bTlQRFJSMTVBNmNzU09lMWN5', 
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
+        'Accept': '*/*'
       },
-      // .toString() forces Vercel to format this exactly like Postman's x-www-form-urlencoded
+      // Using the exact case-sensitive strings from your Postman body
       body: new URLSearchParams({ 
         grant_type: 'password', 
-        username: String(BRIVO_ADMIN_ID || '').trim(), 
-        password: String(BRIVO_PASSWORD || '').trim() 
-      }).toString() 
+        username: 'rfeldman-dAsYc', 
+        password: 'Gateguard123$' 
+      }).toString()
     });
 
     const tokenData = await tokenResponse.json();
@@ -39,11 +32,11 @@ export async function GET() {
       return NextResponse.json([{ id: "err", firstName: "Login", lastName: "Rejected" }]);
     }
 
-    // STEP 2: FETCH USERS
+    // STEP 2: FETCH USERS (The Data Request)
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
         'Authorization': `bearer ${tokenData.access_token}`,
-        'api-key': String(BRIVO_API_KEY || '').trim()
+        'api-key': BRIVO_API_KEY.trim()
       }
     });
 
