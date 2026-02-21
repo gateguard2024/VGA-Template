@@ -6,7 +6,7 @@ export async function GET() {
   const BRIVO_API_KEY = process.env.BRIVO_API_KEY || '';
 
   try {
-    // STEP 1: LOGIN (Working perfectly!)
+    // STEP 1: LOGIN (Hardcoded Postman bypass - Working perfectly!)
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
@@ -27,9 +27,8 @@ export async function GET() {
       return NextResponse.json([{ id: "err", firstName: "Login", lastName: "Rejected" }]);
     }
 
-    // STEP 2: FETCH USERS (The 403 Error)
-    // Removed the extra '/api/' from the URL path just in case
-    const residentsResponse = await fetch('https://api.brivo.com/v1/users?pageSize=100', {
+    // STEP 2: FETCH USERS (Reverted to the correct Brivo URL!)
+    const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
         'Authorization': `bearer ${tokenData.access_token}`,
         'api-key': BRIVO_API_KEY.trim()
@@ -39,10 +38,13 @@ export async function GET() {
     // IF IT FAILS, PRINT THE EXACT REASON TO VERCEL LOGS
     if (!residentsResponse.ok) {
       const errorText = await residentsResponse.text();
-      console.error('--- 403 DATA FETCH FAILED ---');
+      console.error('--- DATA FETCH FAILED ---');
       console.error('Status:', residentsResponse.status);
-      console.error('Sent API Key:', BRIVO_API_KEY ? 'Yes (Hidden)' : 'MISSING!');
+      
+      // This will tell us if Vercel is actually seeing your API Key
+      console.error('Sent API Key:', BRIVO_API_KEY ? `Yes (Starts with ${BRIVO_API_KEY.substring(0,4)}...)` : 'MISSING!');
       console.error('Brivo Reason:', errorText);
+      
       return NextResponse.json([{ id: "err", firstName: "Access", lastName: "Denied" }]);
     }
 
