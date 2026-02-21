@@ -3,21 +3,17 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  // We still need the API Key from Vercel for the second step
   const BRIVO_API_KEY = process.env.BRIVO_API_KEY || '';
 
   try {
-    // STEP 1: LOGIN (The Handshake)
-    // We are HARDCODING the exact Base64 string and credentials from your successful Postman trace!
+    // STEP 1: LOGIN (Working perfectly!)
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
-        // This is the EXACT string from your Postman logs
         'Authorization': 'Basic M2ZkMTU2MTYtMTEwOS00NWM3LTlhM2EtZTFiOGJkZGFhMDY0OndNd1hrNDZ6d1c3MHc4bTlQRFJSMTVBNmNzU09lMWN5', 
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': '*/*'
       },
-      // Using the exact case-sensitive strings from your Postman body
       body: new URLSearchParams({ 
         grant_type: 'password', 
         username: 'rfeldman-dAsYc', 
@@ -28,19 +24,25 @@ export async function GET() {
     const tokenData = await tokenResponse.json();
 
     if (!tokenResponse.ok) {
-      console.error('Brivo Login Failed:', tokenData);
       return NextResponse.json([{ id: "err", firstName: "Login", lastName: "Rejected" }]);
     }
 
-    // STEP 2: FETCH USERS (The Data Request)
-    const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
+    // STEP 2: FETCH USERS (The 403 Error)
+    // Removed the extra '/api/' from the URL path just in case
+    const residentsResponse = await fetch('https://api.brivo.com/v1/users?pageSize=100', {
       headers: {
         'Authorization': `bearer ${tokenData.access_token}`,
         'api-key': BRIVO_API_KEY.trim()
       }
     });
 
+    // IF IT FAILS, PRINT THE EXACT REASON TO VERCEL LOGS
     if (!residentsResponse.ok) {
+      const errorText = await residentsResponse.text();
+      console.error('--- 403 DATA FETCH FAILED ---');
+      console.error('Status:', residentsResponse.status);
+      console.error('Sent API Key:', BRIVO_API_KEY ? 'Yes (Hidden)' : 'MISSING!');
+      console.error('Brivo Reason:', errorText);
       return NextResponse.json([{ id: "err", firstName: "Access", lastName: "Denied" }]);
     }
 
