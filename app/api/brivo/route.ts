@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-// This tells Vercel not to cache this API call
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
@@ -13,11 +12,12 @@ export async function GET() {
   } = process.env;
 
   try {
-    // 1. Create the Basic Auth Header (Base64 encoding ID and Secret)
+    // Basic Auth Header using your confirmed Client ID and Secret
     const credentials = `${BRIVO_CLIENT_ID?.trim()}:${BRIVO_CLIENT_SECRET?.trim()}`;
     const authHeader = Buffer.from(credentials).toString('base64');
     
     // STEP 1: LOGIN (The Handshake)
+    // Matches your successful Postman Body configuration
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
@@ -33,17 +33,16 @@ export async function GET() {
 
     const tokenData = await tokenResponse.json();
 
-    // If this part fails, we stop and log the error
     if (!tokenResponse.ok) {
-      console.error('--- DEBUG BRIVO LOGIN ---');
-      console.error('Brivo Response:', tokenData);
+      console.error('Brivo Login Rejected:', tokenData);
       return NextResponse.json([{ id: "err", firstName: "Login", lastName: "Rejected" }]);
     }
 
     // STEP 2: GET USERS (The Data Request)
+    // Uses the 'bearer' token and 'api-key' header from Brivo instructions
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
       headers: {
-        'Authorization': `bearer ${tokenData.access_token}`, // Lowercase 'bearer' per instructions
+        'Authorization': `bearer ${tokenData.access_token}`,
         'api-key': String(BRIVO_API_KEY || '').trim()
       }
     });
@@ -54,7 +53,6 @@ export async function GET() {
 
     const data = await residentsResponse.json();
     
-    // Map the Brivo data format to what your Directory UI expects
     const residents = (data.users || []).map((u: any) => ({
       id: u.id,
       firstName: u.firstName || "",
@@ -65,7 +63,6 @@ export async function GET() {
     return NextResponse.json(residents);
 
   } catch (error: any) {
-    console.error('CRITICAL SYSTEM ERROR:', error);
     return NextResponse.json([{ id: "err", firstName: "System", lastName: "Error" }]);
   }
 }
