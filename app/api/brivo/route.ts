@@ -4,43 +4,32 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const { 
-    BRIVO_CLIENT_ID, 
-    BRIVO_CLIENT_SECRET, 
+    BRIVO_BASIC_AUTH, // Pulling the perfect string from Postman
+    BRIVO_API_KEY, 
     BRIVO_PASSWORD, 
     BRIVO_ADMIN_ID 
   } = process.env;
 
   try {
-    // 1. VERIFY VARIABLES ARE ACTUALLY LOADING
-    console.log('--- ENV VAR CHECK ---');
-    console.log('Has Client ID?', !!BRIVO_CLIENT_ID, `(Length: ${BRIVO_CLIENT_ID?.length})`);
-    console.log('Has Secret?', !!BRIVO_CLIENT_SECRET, `(Length: ${BRIVO_CLIENT_SECRET?.length})`);
-    
-    if (!BRIVO_CLIENT_ID || !BRIVO_CLIENT_SECRET) {
-      console.error('CRITICAL: Vercel is not passing the Environment Variables to the code!');
-      return NextResponse.json([{ id: "err", firstName: "Env", lastName: "Missing" }]);
+    if (!BRIVO_BASIC_AUTH) {
+      console.error('Missing BRIVO_BASIC_AUTH in Vercel Variables!');
+      return NextResponse.json([{ id: "err", firstName: "Setup", lastName: "Missing-Auth" }]);
     }
 
-    // 2. GENERATE THE KEY
-    const credentials = `${BRIVO_CLIENT_ID.trim()}:${BRIVO_CLIENT_SECRET.trim()}`;
-    // Using btoa() which is safer across different Vercel Edge/Node runtimes
-    const authHeader = btoa(credentials);
-    
-    console.log('Generated Auth Header: Basic', authHeader);
-
-    // 3. ATTEMPT LOGIN
+    // STEP 1: LOGIN (Using Postman's exact Base64 string)
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
-        'Authorization': `Basic ${authHeader}`, 
+        'Authorization': `Basic ${BRIVO_BASIC_AUTH.trim()}`, 
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
+      // .toString() forces Vercel to format this exactly like Postman's x-www-form-urlencoded
       body: new URLSearchParams({ 
         grant_type: 'password', 
         username: String(BRIVO_ADMIN_ID || '').trim(), 
         password: String(BRIVO_PASSWORD || '').trim() 
-      })
+      }).toString() 
     });
 
     const tokenData = await tokenResponse.json();
@@ -50,7 +39,28 @@ export async function GET() {
       return NextResponse.json([{ id: "err", firstName: "Login", lastName: "Rejected" }]);
     }
 
-    return NextResponse.json([{ id: "success", firstName: "Login", lastName: "Worked!" }]);
+    // STEP 2: FETCH USERS
+    const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
+      headers: {
+        'Authorization': `bearer ${tokenData.access_token}`,
+        'api-key': String(BRIVO_API_KEY || '').trim()
+      }
+    });
+
+    if (!residentsResponse.ok) {
+      return NextResponse.json([{ id: "err", firstName: "Access", lastName: "Denied" }]);
+    }
+
+    const data = await residentsResponse.json();
+    
+    const residents = (data.users || []).map((u: any) => ({
+      id: u.id,
+      firstName: u.firstName || "",
+      lastName: u.lastName || "Resident",
+      phoneNumber: u.phoneNumbers?.[0]?.number || "" 
+    }));
+
+    return NextResponse.json(residents);
 
   } catch (error: any) {
     console.error('Code Crash:', error);
