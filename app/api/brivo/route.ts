@@ -9,7 +9,7 @@ export async function GET() {
     // STEP 1: LOGIN
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
-      cache: 'no-store', // 🛑 FIX: Forces Vercel to get a brand new token every time
+      cache: 'no-store',
       headers: { 
         'Authorization': 'Basic M2ZkMTU2MTYtMTEwOS00NWM3LTlhM2EtZTFiOGJkZGFhMDY0OndNd1hrNDZ6d1c3MHc4bTlQRFJSMTVBNmNzU09lMWN5', 
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -30,7 +30,7 @@ export async function GET() {
 
     // STEP 2: FETCH USERS
     const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
-      cache: 'no-store', // 🛑 FIX: Forces Vercel to fetch fresh users
+      cache: 'no-store',
       headers: {
         'Authorization': `bearer ${tokenData.access_token}`,
         'api-key': BRIVO_API_KEY.trim()
@@ -38,19 +38,28 @@ export async function GET() {
     });
 
     if (!residentsResponse.ok) {
-      const errorText = await residentsResponse.text();
-      console.error('--- DATA FETCH FAILED ---');
-      console.error('Status:', residentsResponse.status);
-      console.error('Brivo Reason:', errorText);
       return NextResponse.json([{ id: "err", firstName: "Access", lastName: "Denied" }]);
     }
 
     const data = await residentsResponse.json();
     
-    // Map the Brivo users to your directory format
-    const residents = (data.users || []).map((u: any) => ({
-      id: u.id,
-      firstName: u.firstName || "",
+    // 🛑 DEBUGGING: Let's see exactly what Brivo sent us!
+    console.log('--- BRIVO DATA STRUCTURE ---');
+    console.log('Keys found in response:', Object.keys(data));
+    
+    // We will try looking in 'data' instead of 'users' as a fallback
+    const rawList = data.users || data.data || data.results || [];
+    
+    if (rawList.length > 0) {
+      console.log('First resident found looks like:', rawList[0]);
+    } else {
+      console.log('The list is still completely empty!');
+    }
+
+    // Map the users to your directory format
+    const residents = rawList.map((u: any) => ({
+      id: u.id || Math.random().toString(),
+      firstName: u.firstName || "Unknown",
       lastName: u.lastName || "Resident",
       phoneNumber: u.phoneNumbers?.[0]?.number || "" 
     }));
