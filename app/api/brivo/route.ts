@@ -6,17 +6,29 @@ export async function GET() {
   const { 
     BRIVO_CLIENT_ID, 
     BRIVO_CLIENT_SECRET, 
-    BRIVO_API_KEY, 
     BRIVO_PASSWORD, 
     BRIVO_ADMIN_ID 
   } = process.env;
 
   try {
-    // Basic Auth encoding (The 'Authorization' tab in Postman)
-    const credentials = `${BRIVO_CLIENT_ID?.trim()}:${BRIVO_CLIENT_SECRET?.trim()}`;
-    const authHeader = Buffer.from(credentials).toString('base64');
+    // 1. VERIFY VARIABLES ARE ACTUALLY LOADING
+    console.log('--- ENV VAR CHECK ---');
+    console.log('Has Client ID?', !!BRIVO_CLIENT_ID, `(Length: ${BRIVO_CLIENT_ID?.length})`);
+    console.log('Has Secret?', !!BRIVO_CLIENT_SECRET, `(Length: ${BRIVO_CLIENT_SECRET?.length})`);
     
-    // STEP 1: LOGIN (The Handshake)
+    if (!BRIVO_CLIENT_ID || !BRIVO_CLIENT_SECRET) {
+      console.error('CRITICAL: Vercel is not passing the Environment Variables to the code!');
+      return NextResponse.json([{ id: "err", firstName: "Env", lastName: "Missing" }]);
+    }
+
+    // 2. GENERATE THE KEY
+    const credentials = `${BRIVO_CLIENT_ID.trim()}:${BRIVO_CLIENT_SECRET.trim()}`;
+    // Using btoa() which is safer across different Vercel Edge/Node runtimes
+    const authHeader = btoa(credentials);
+    
+    console.log('Generated Auth Header: Basic', authHeader);
+
+    // 3. ATTEMPT LOGIN
     const tokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
       method: 'POST',
       headers: { 
@@ -24,7 +36,6 @@ export async function GET() {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
-      // Using lowercase 'password' for grant_type per your Postman discovery
       body: new URLSearchParams({ 
         grant_type: 'password', 
         username: String(BRIVO_ADMIN_ID || '').trim(), 
@@ -39,32 +50,10 @@ export async function GET() {
       return NextResponse.json([{ id: "err", firstName: "Login", lastName: "Rejected" }]);
     }
 
-    // STEP 2: FETCH RESIDENTS (The Data Request)
-    const residentsResponse = await fetch('https://api.brivo.com/v1/api/users?pageSize=100', {
-      headers: {
-        'Authorization': `bearer ${tokenData.access_token}`,
-        'api-key': String(BRIVO_API_KEY || '').trim()
-      }
-    });
-
-    if (!residentsResponse.ok) {
-      return NextResponse.json([{ id: "err", firstName: "Access", lastName: "Denied" }]);
-    }
-
-    const data = await residentsResponse.json();
-    
-    // Map the Brivo users to the format your directory expects
-    const residents = (data.users || []).map((u: any) => ({
-      id: u.id,
-      firstName: u.firstName || "",
-      lastName: u.lastName || "Resident",
-      phoneNumber: u.phoneNumbers?.[0]?.number || "" 
-    }));
-
-    return NextResponse.json(residents);
+    return NextResponse.json([{ id: "success", firstName: "Login", lastName: "Worked!" }]);
 
   } catch (error: any) {
-    console.error('Critical System Error:', error);
-    return NextResponse.json([{ id: "err", firstName: "System", lastName: "Error" }]);
+    console.error('Code Crash:', error);
+    return NextResponse.json([{ id: "err", firstName: "System", lastName: "Crash" }]);
   }
 }
