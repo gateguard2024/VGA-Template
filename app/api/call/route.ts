@@ -7,23 +7,21 @@ export async function POST(request: Request) {
     // ==========================================
     // 1. LOG THE DATA TO GOOGLE SHEETS
     // ==========================================
-    try {
-      // ⚠️ IMPORTANT: Replace these with your actual Form IDs!
+try {
       const googleFormData = new URLSearchParams({
-        'entry.111111111': visitorName,      // Replace 111111111 with your Name entry ID
-        'entry.222222222': visitorPhone,     // Replace 222222222 with your Phone entry ID
-        'entry.333333333': residentName      // Replace 333333333 with your Resident entry ID
+        'entry.1118496355': visitorName,      // Visitor Name
+        'entry.1247426777': visitorPhone,     // Visitor Phone
+        'entry.926817152': residentName       // Resident Called
       });
 
-      // ⚠️ IMPORTANT: Replace YOUR_FORM_ID_HERE with your massive Google Form ID string
-      await fetch('https://docs.google.com/forms/d/e/YOUR_FORM_ID_HERE/formResponse', {
+      await fetch('https://docs.google.com/forms/d/e/1FAIpQLSc1WYqVMwcZeSZIKuHcbaKsYd4dupT6-QzcOePOxPFOqjrrBg/formResponse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: googleFormData.toString()
       });
       console.log("Logged call to Google Sheets successfully.");
     } catch (logError) {
-      console.error('Logging silently failed. Proceeding with call anyway.', logError);
+      console.error('Logging silently failed.', logError);
     }
 
     // ==========================================
