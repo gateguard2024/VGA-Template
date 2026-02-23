@@ -124,7 +124,14 @@ export default function LandingPage() {
       <div className="w-full max-w-md p-6 flex flex-col items-center flex-grow pt-12">
         
         {/* HEADER SECTION */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-10 flex flex-col items-center">
+          {/* THE LOGO */}
+          <img 
+            src="/Logo.jpg" 
+            alt="Property Logo" 
+            className="w-32 h-auto mb-6 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.05)]" 
+          />
+          
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Welcome To</p>
           <h1 className="text-2xl font-black uppercase italic tracking-tighter text-white leading-none mb-2">
             {SITE_CONFIG.propertyName}
