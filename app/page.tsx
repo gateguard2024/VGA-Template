@@ -31,7 +31,7 @@ const LeasingPhoneModal = ({ isOpen, onClose, onConfirm }: any) => {
         />
         <input 
           type="tel" 
-          placeholder="(xxx) xxx-xxxx"
+          placeholder="(770) 000-0000"
           className="w-full bg-black border border-white/10 p-5 rounded-2xl text-2xl text-center font-black text-white outline-none mb-6"
           value={number}
           onChange={(e) => setNumber(e.target.value)}
@@ -53,22 +53,16 @@ export default function LandingPage() {
   const [isLeasingModalOpen, setIsLeasingModalOpen] = useState(false);
   const [isOfficeOpen, setIsOfficeOpen] = useState(false);
 
-  // Intelligently check your specific Config hours
   useEffect(() => {
     const checkIsOpen = () => {
       const now = new Date();
-      const day = now.getDay(); // 0 is Sunday, 6 is Saturday
+      const day = now.getDay(); 
       const hour = now.getHours();
       
       const { hours } = SITE_CONFIG;
 
-      if (day === 0) return !hours.sunday.closed; // Sunday check
-      
-      if (day === 6) { // Saturday check
-        return hour >= hours.saturday.open && hour < hours.saturday.close;
-      }
-      
-      // Weekday check (1-5)
+      if (day === 0) return !hours.sunday.closed; 
+      if (day === 6) return hour >= hours.saturday.open && hour < hours.saturday.close;
       return hour >= hours.weekdays.open && hour < hours.weekdays.close;
     };
     
@@ -84,7 +78,7 @@ export default function LandingPage() {
         body: JSON.stringify({ 
           visitorName: visitorName,
           visitorPhone: `+1${visitorPhone.replace(/\D/g, '')}`, 
-          residentPhone: `+1${SITE_CONFIG.officePhone}`, // Grabs from config and formats for Twilio
+          residentPhone: `+1${SITE_CONFIG.officePhone}`, 
           residentName: "Leasing Office" 
         })
       });
@@ -130,7 +124,7 @@ export default function LandingPage() {
           {/* 1. DIRECTORY BUTTON */}
           <button 
             onClick={() => router.push('/directory')}
-            className="w-full bg-[#0a0a0a] border border-blue-500/30 p-5 rounded-[2.5rem] flex items-center justify-between group hover:bg-blue-900/10 transition-all"
+            className="w-full bg-[#0a0a0a] border border-blue-500/40 p-5 rounded-[2.5rem] flex items-center justify-between group hover:bg-blue-900/10 transition-all"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
@@ -144,7 +138,7 @@ export default function LandingPage() {
           {/* 2. CALL LEASING BUTTON */}
           <button 
             onClick={() => isOfficeOpen ? setIsLeasingModalOpen(true) : null}
-            className={`w-full bg-[#0a0a0a] border border-white/5 p-5 rounded-[2.5rem] flex items-center justify-between transition-all ${!isOfficeOpen ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5 cursor-pointer'}`}
+            className={`w-full bg-[#0a0a0a] border p-5 rounded-[2.5rem] flex items-center justify-between transition-all ${!isOfficeOpen ? 'border-red-900/30 opacity-50 cursor-not-allowed' : 'border-slate-500/40 hover:bg-white/5 cursor-pointer'}`}
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center">
@@ -161,7 +155,7 @@ export default function LandingPage() {
           {/* 3. PACKAGES BUTTON */}
           <button 
             onClick={() => router.push('/packages')}
-            className="w-full bg-[#0a0a0a] border border-white/5 p-5 rounded-[2.5rem] flex items-center justify-between hover:bg-white/5 transition-all"
+            className="w-full bg-[#0a0a0a] border border-slate-500/40 p-5 rounded-[2.5rem] flex items-center justify-between hover:bg-white/5 transition-all"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center">
@@ -175,7 +169,7 @@ export default function LandingPage() {
           {/* 4. EMERGENCY BUTTON */}
           <button 
             onClick={() => router.push('/emergency')}
-            className="w-full bg-[#1a0505] border border-red-500/20 p-5 rounded-[2.5rem] flex items-center justify-between hover:bg-red-950/40 transition-all mt-8"
+            className="w-full bg-[#1a0505] border border-red-500/50 p-5 rounded-[2.5rem] flex items-center justify-between hover:bg-red-950/40 transition-all mt-8"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
