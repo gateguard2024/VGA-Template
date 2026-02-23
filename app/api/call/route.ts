@@ -55,7 +55,8 @@ export async function POST(request: Request) {
     // ==========================================
     // 3. EAGLE EYE + SMS INTERCEPT (THE WOW FACTOR)
     // ==========================================
-    if (reason === "Package / Delivery Courier") {
+    // 🔀 UPDATED: Now triggers from the main dropdown OR the dedicated Packages page!
+    if (reason === "Package / Delivery Courier" || residentName === "Leasing Office (Delivery)") {
       try {
         // [FUTURE TODO]: Ping the Eagle Eye API here to get the real snapshot URL
         // const eagleEyeResponse = await fetch('https://api.een.com/YOUR_ENDPOINT');
