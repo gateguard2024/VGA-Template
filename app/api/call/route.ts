@@ -5,34 +5,39 @@ export async function POST(request: Request) {
     const { visitorName, visitorPhone, residentPhone, residentName, email, reason } = await request.json();
 
     // ==========================================
-    // 1. LOG THE DATA TO GOOGLE SHEETS
+    // 1. LOG THE DATA (Ready for Automation)
     // ==========================================
     try {
       let googleFormData;
       let formUrl;
 
       if (email && reason) {
+        // LEASING LEADS LOGGING
         googleFormData = new URLSearchParams({
-          'entry.1624763305': visitorName,      
-          'entry.2095382593': visitorPhone,     
-          'entry.1040377282': email,            
-          'entry.2118777131': reason            
+          [process.env.ENTRY_LEAD_NAME || '']: visitorName,      
+          [process.env.ENTRY_LEAD_PHONE || '']: visitorPhone,     
+          [process.env.ENTRY_LEAD_EMAIL || '']: email,            
+          [process.env.ENTRY_LEAD_REASON || '']: reason            
         });
-        formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfcmU3HUXMpCF8-n64Ud5OVdemTmiUEk21B3wXO8ut__pT3jA/formResponse';
+        formUrl = process.env.GOOGLE_FORM_URL_LEADS;
       } else {
+        // STANDARD GATE LOGGING
         googleFormData = new URLSearchParams({
-          'entry.1118496355': visitorName,      
-          'entry.1247426777': visitorPhone,     
-          'entry.926817152': residentName       
+          [process.env.ENTRY_VISITOR_NAME || '']: visitorName,      
+          [process.env.ENTRY_VISITOR_PHONE || '']: visitorPhone,     
+          [process.env.ENTRY_RESIDENT_CALLED || '']: residentName       
         });
-        formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSc1WYqVMwcZeSZIKuHcbaKsYd4dupT6-QzcOePOxPFOqjrrBg/formResponse';
+        formUrl = process.env.GOOGLE_FORM_URL_STANDARD;
       }
 
-      await fetch(formUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: googleFormData.toString()
-      });
+      // Only attempt to log if the automation system provided a URL
+      if (formUrl) {
+        await fetch(formUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: googleFormData.toString()
+        });
+      }
     } catch (logError) {
       console.error('Logging silently failed.', logError);
     }
@@ -53,45 +58,10 @@ export async function POST(request: Request) {
     const twilioAuthHeader = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
 
     // ==========================================
-    // 3. BRIVO AUTH & SMS INTERCEPT
+    // 3. DELIVERY SMS INTERCEPT
     // ==========================================
     if (reason === "Package / Delivery Courier" || residentName === "Leasing Office (Delivery)") {
       try {
-        let snapshotUrl = "https://images.unsplash.com/photo-1620455800201-7f00aeec126f?q=80&w=800&auto=format&fit=crop"; // Fallback Image
-        
-        // Check if Brivo Keys exist in Vercel
-        if (process.env.BRIVO_API_KEY && process.env.BRIVO_CLIENT_ID) {
-           console.log("Brivo credentials found. Attempting secure login...");
-           
-           const brivoAuthString = Buffer.from(`${process.env.BRIVO_CLIENT_ID}:${process.env.BRIVO_CLIENT_SECRET}`).toString('base64');
-           
-           // Shake hands with Brivo to get a secure Access Token
-           const brivoTokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
-             method: 'POST',
-             headers: {
-               'Authorization': `Basic ${brivoAuthString}`,
-               'api-key': process.env.BRIVO_API_KEY,
-               'Content-Type': 'application/x-www-form-urlencoded'
-             },
-             body: new URLSearchParams({
-               grant_type: 'password',
-               username: process.env.BRIVO_USERNAME!,
-               password: process.env.BRIVO_PASSWORD!
-             })
-           });
-
-           if (brivoTokenResponse.ok) {
-              const tokenData = await brivoTokenResponse.json();
-              console.log("✅ Brivo Login Successful! Token acquired.");
-              
-              // We will build the snapshot proxy in the next step using Camera ID 76666830
-              // For now, we confirm login works.
-           } else {
-              console.error("❌ Brivo Login Failed. Check your Vercel keys.");
-           }
-        }
-
-        // Send the SMS via Twilio Messages API
         await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
           method: 'POST',
           headers: {
@@ -101,12 +71,12 @@ export async function POST(request: Request) {
           body: new URLSearchParams({
             To: formattedResidentPhone, 
             From: TWILIO_PHONE_NUMBER,
-            Body: `🚨 GATE ALERT: Delivery driver (${visitorName}) is requesting access at the gate. Connecting call now...`,
-            MediaUrl: snapshotUrl
+            Body: `🚨 GATE ALERT: Delivery driver (${visitorName}) is requesting access at the gate. Connecting call now...`
+            // Note: MediaUrl removed for MVP V1
           }).toString()
         });
       } catch (smsError) {
-        console.error("Failed to process Delivery SMS:", smsError);
+        console.error("Failed to send Delivery SMS:", smsError);
       }
     }
 
