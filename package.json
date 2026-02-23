@@ -13,7 +13,6 @@
     "react-dom": "^18",
     "next": "14.2.20",
     "lucide-react": "^0.322.0",
-    "@ringcentral/sdk": "latest",
     "tailwindcss": "^3.3.0",
     "autoprefixer": "^10.0.1",
     "postcss": "^8"
