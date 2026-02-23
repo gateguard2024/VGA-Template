@@ -3,7 +3,11 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  // Pulling all highly sensitive Brivo credentials from Vercel!
   const BRIVO_API_KEY = process.env.BRIVO_API_KEY || '';
+  const BRIVO_AUTH_BASIC = process.env.BRIVO_AUTH_BASIC || '';
+  const BRIVO_USERNAME = process.env.BRIVO_USERNAME || '';
+  const BRIVO_PASSWORD = process.env.BRIVO_PASSWORD || '';
 
   try {
     // STEP 1: LOGIN (Handshake)
@@ -11,14 +15,14 @@ export async function GET() {
       method: 'POST',
       cache: 'no-store', // Always get a fresh token to avoid 59-second expiration
       headers: { 
-        'Authorization': 'Basic M2ZkMTU2MTYtMTEwOS00NWM3LTlhM2EtZTFiOGJkZGFhMDY0OndNd1hrNDZ6d1c3MHc4bTlQRFJSMTVBNmNzU09lMWN5', 
+        'Authorization': `Basic ${BRIVO_AUTH_BASIC}`, 
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': '*/*'
       },
       body: new URLSearchParams({ 
         grant_type: 'password', 
-        username: 'rfeldman-dAsYc', 
-        password: 'Gateguard123$' 
+        username: BRIVO_USERNAME, 
+        password: BRIVO_PASSWORD 
       }).toString()
     });
 
