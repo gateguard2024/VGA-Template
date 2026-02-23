@@ -1,11 +1,11 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Phone, ArrowLeft, X, ShieldCheck, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SITE_CONFIG } from '../config';
 
 // --- TWILIO BRIDGE MODAL (Red Theme for Emergency) ---
-const EmergencyPhoneModal = ({ isOpen, onClose, onConfirm }: any) => {
+const EmergencyPhoneModal = ({ isOpen, onClose, onConfirm, isOfficeOpen }: any) => {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
   
@@ -16,8 +16,12 @@ const EmergencyPhoneModal = ({ isOpen, onClose, onConfirm }: any) => {
       <div className="w-full max-w-md bg-[#1a0505] border border-red-500/20 rounded-[2.5rem] p-8 shadow-2xl">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="text-xl font-black uppercase italic tracking-tighter text-red-500">Call Dispatch</h3>
-            <p className="text-red-900 text-[10px] font-bold uppercase tracking-widest mt-1">After-Hours Assistance</p>
+            <h3 className="text-xl font-black uppercase italic tracking-tighter text-red-500">
+              {isOfficeOpen ? "Call Leasing Office" : "Call Dispatch"}
+            </h3>
+            <p className="text-red-900 text-[10px] font-bold uppercase tracking-widest mt-1">
+              Property Emergency
+            </p>
           </div>
           <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-red-500/50 hover:bg-white/10 transition"><X size={20}/></button>
         </div>
@@ -41,7 +45,7 @@ const EmergencyPhoneModal = ({ isOpen, onClose, onConfirm }: any) => {
           disabled={number.length < 10 || name.trim() === ''}
           className="w-full bg-red-600 py-5 rounded-2xl font-black uppercase italic text-sm disabled:opacity-30 text-white transition-opacity"
         >
-          Initiate Dispatch Call
+          Initiate Emergency Call
         </button>
       </div>
     </div>
@@ -51,9 +55,32 @@ const EmergencyPhoneModal = ({ isOpen, onClose, onConfirm }: any) => {
 export default function EmergencyPage() {
   const router = useRouter();
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+  const [isOfficeOpen, setIsOfficeOpen] = useState(false);
+
+  // Intelligently check your specific Config hours to route the call
+  useEffect(() => {
+    const checkIsOpen = () => {
+      const now = new Date();
+      const day = now.getDay(); 
+      const hour = now.getHours();
+      
+      const { hours } = SITE_CONFIG;
+
+      if (day === 0) return !hours.sunday.closed; 
+      if (day === 6) return hour >= hours.saturday.open && hour < hours.saturday.close;
+      return hour >= hours.weekdays.open && hour < hours.weekdays.close;
+    };
+    
+    setIsOfficeOpen(checkIsOpen());
+  }, []);
 
   const handleEmergencyCall = async (visitorName: string, visitorPhone: string) => {
     setIsEmergencyModalOpen(false);
+    
+    // SMART ROUTING: Swap number and log name based on the clock!
+    const destinationPhone = isOfficeOpen ? SITE_CONFIG.officePhone : SITE_CONFIG.emergencyPhone;
+    const destinationLogName = isOfficeOpen ? "Leasing Office (Emergency)" : "After-Hours Dispatch";
+
     try {
       await fetch('/api/call', {
         method: 'POST',
@@ -61,11 +88,11 @@ export default function EmergencyPage() {
         body: JSON.stringify({ 
           visitorName: visitorName,
           visitorPhone: `+1${visitorPhone.replace(/\D/g, '')}`, 
-          residentPhone: `+1${SITE_CONFIG.emergencyPhone}`, // Pulls the After-Hours number from config!
-          residentName: "After-Hours Dispatch" // Logs specifically to Google Sheets
+          residentPhone: `+1${destinationPhone}`, 
+          residentName: destinationLogName 
         })
       });
-      alert("Call initiated! Answer your phone to connect to the After-Hours Call Center.");
+      alert(`Call initiated! Connecting you to ${isOfficeOpen ? 'the Leasing Office' : 'After-Hours Dispatch'}.`);
     } catch (e) {
       alert("Error. Please try again.");
     }
@@ -77,7 +104,8 @@ export default function EmergencyPage() {
       <EmergencyPhoneModal 
         isOpen={isEmergencyModalOpen} 
         onClose={() => setIsEmergencyModalOpen(false)} 
-        onConfirm={handleEmergencyCall} 
+        onConfirm={handleEmergencyCall}
+        isOfficeOpen={isOfficeOpen}
       />
 
       <div className="w-full max-w-md p-6 flex flex-col flex-grow">
@@ -113,7 +141,7 @@ export default function EmergencyPage() {
         {/* BUTTON LAYOUT */}
         <div className="w-full space-y-4">
           
-          {/* AFTER-HOURS BUTTON */}
+          {/* DYNAMIC EMERGENCY BUTTON */}
           <button 
             onClick={() => setIsEmergencyModalOpen(true)}
             className="w-full bg-[#1a0505] border border-red-500/50 p-5 rounded-[2.5rem] flex items-center justify-between group hover:bg-red-900/20 transition-all"
@@ -123,7 +151,9 @@ export default function EmergencyPage() {
                 <Phone size={20} className="text-white" />
               </div>
               <div className="text-left">
-                <span className="text-xl font-black uppercase italic tracking-tighter text-white block leading-none">After-Hours</span>
+                <span className="text-xl font-black uppercase italic tracking-tighter text-white block leading-none">
+                  {isOfficeOpen ? "Call Office" : "After-Hours"}
+                </span>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-red-400 mt-1 block">Property Emergencies</span>
               </div>
             </div>
