@@ -22,7 +22,6 @@ const VisitorPhoneModal = ({ isOpen, onClose, onConfirm, residentName }: any) =>
           <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-slate-500"><X size={20}/></button>
         </div>
         
-        {/* NEW: VISITOR NAME INPUT */}
         <input 
           type="text" 
           placeholder="Your Full Name"
@@ -31,7 +30,6 @@ const VisitorPhoneModal = ({ isOpen, onClose, onConfirm, residentName }: any) =>
           onChange={(e) => setName(e.target.value)}
         />
 
-        {/* VISITOR PHONE INPUT */}
         <input 
           type="tel" 
           placeholder="(770) 000-0000"
@@ -41,11 +39,9 @@ const VisitorPhoneModal = ({ isOpen, onClose, onConfirm, residentName }: any) =>
         />
 
         <button 
-          // Now passing BOTH name and number back to the main page
           onClick={() => onConfirm(name, number)}
-          // Button stays disabled until they type a name AND a 10-digit number
           disabled={number.length < 10 || name.trim() === ''}
-          className="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase italic text-sm disabled:opacity-30"
+          className="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase italic text-sm disabled:opacity-30 transition-opacity"
         >
           Initiate Secure Call
         </button>
@@ -89,7 +85,6 @@ export default function SecureDirectory() {
     );
   }, [residents, searchTerm]);
 
-  // UPDATED: Now receives the visitorName and sends all 4 pieces of data to the switchboard
   const handlePrivacyCall = async (visitorName: string, visitorPhone: string) => {
     setIsModalOpen(false);
     setCallingId(selectedResident.id);
@@ -99,7 +94,7 @@ export default function SecureDirectory() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           visitorName: visitorName,
-          visitorPhone: `+1${visitorPhone.replace(/\D/g, '')}`, // Clean the number and add +1
+          visitorPhone: `+1${visitorPhone.replace(/\D/g, '')}`,
           residentPhone: selectedResident.phoneNumber,
           residentName: `${selectedResident.firstName} ${selectedResident.lastName}`
         })
@@ -115,7 +110,6 @@ export default function SecureDirectory() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center font-sans overflow-hidden">
       
-      {/* Renders the updated modal */}
       <VisitorPhoneModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
@@ -125,11 +119,11 @@ export default function SecureDirectory() {
       
       <div className="w-full max-w-md p-6 flex flex-col flex-grow">
         <header className="w-full flex items-center justify-between mb-8 pt-4">
-          <button onClick={() => router.push('/')} className="p-3 bg-white/5 rounded-2xl text-slate-400">
+          <button onClick={() => router.push('/')} className="p-3 bg-white/5 rounded-2xl text-slate-400 hover:bg-white/10 transition-colors">
             <ArrowLeft size={24} />
           </button>
           <div className="text-right">
-            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 italic">Live Feed</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 italic">Directory</span>
             <div className="text-[9px] font-bold text-slate-700 uppercase">{SITE_CONFIG.propertyName}</div>
           </div>
         </header>
@@ -139,7 +133,7 @@ export default function SecureDirectory() {
           <input 
             type="text" 
             placeholder="Search Residents..." 
-            className="w-full bg-[#0a0a0a] border border-white/5 p-5 pl-12 rounded-2xl text-slate-200 outline-none focus:border-blue-500/30 font-bold" 
+            className="w-full bg-[#0a0a0a] border border-white/5 p-5 pl-12 rounded-2xl text-slate-200 outline-none focus:border-blue-500/30 font-bold transition-colors" 
             onChange={(e) => setSearchTerm(e.target.value)} 
           />
           <p className="text-[9px] text-slate-800 mt-4 font-black uppercase tracking-[0.2em] text-center italic">
@@ -169,7 +163,7 @@ export default function SecureDirectory() {
               <button 
                 onClick={() => { setSelectedResident(res); setIsModalOpen(true); }}
                 disabled={callingId === res.id}
-                className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg active:scale-95 disabled:opacity-50 transition-all"
+                className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg active:scale-95 disabled:opacity-50 transition-all hover:bg-blue-500"
               >
                 {callingId === res.id ? <Loader2 className="animate-spin" size={20} /> : <Phone size={20} fill="currentColor" />}
               </button>
@@ -185,7 +179,7 @@ export default function SecureDirectory() {
         
         <footer className="mt-auto py-8 opacity-20 flex items-center justify-center gap-2">
           <ShieldCheck size={12} className="text-blue-500" />
-          <span className="text-[8px] font-black uppercase tracking-[0.5em]">Secure Terminal</span>
+          <span className="text-[8px] font-black uppercase tracking-[0.5em]">{SITE_CONFIG.footerText}</span>
         </footer>
       </div>
     </div>
