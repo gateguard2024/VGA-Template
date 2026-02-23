@@ -1,13 +1,13 @@
 export const SITE_CONFIG = {
-  // Property Branding
-  propertyName: "Elevate Eagles Landing",
-  propertyAddress: "700 Rock Quarry Road",
+  // Property Branding - Now dynamically pulling from Vercel!
+  propertyName: process.env.NEXT_PUBLIC_PROPERTY_NAME || "Elevate Eagles Landing",
+  propertyAddress: process.env.NEXT_PUBLIC_PROPERTY_ADDRESS || "700 Rock Quarry Road",
   brandName: "Gate Guard",
   footerText: "Gate Guard Security Interface",
   
-  // Contact Numbers
-  officePhone: "7705256055",      // Standard Leasing Office
-  emergencyPhone: "4048425072",     // After-Hours/Emergency Call Center
+  // Contact Numbers - Now dynamically pulling from Vercel!
+  officePhone: process.env.NEXT_PUBLIC_OFFICE_PHONE || "7705256055",      
+  emergencyPhone: process.env.NEXT_PUBLIC_EMERGENCY_PHONE || "4048425072",     
   
   // Office Hours (24-hour format)
   hours: {
@@ -18,9 +18,9 @@ export const SITE_CONFIG = {
 
   // Geofencing Coordinates (Elevate Eagles Landing)
   location: {
-    lat: 34.3615, // Exact Rock Quarry Rd gate
-    lng: -84.3978, // Exact Rock Quarry Rd gate
-    radius: 1.5  // Miles (1/2 mile)
+    lat: 34.3615, 
+    lng: -84.3978, 
+    radius: 1.5  
   },
 
   // Brivo Settings (Reference)
