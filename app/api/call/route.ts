@@ -50,38 +50,63 @@ export async function POST(request: Request) {
 
     const cleanResidentNumber = residentPhone.replace(/\D/g, '').slice(-10);
     const formattedResidentPhone = `+1${cleanResidentNumber}`;
-    const authHeader = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
+    const twilioAuthHeader = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
 
     // ==========================================
-    // 3. EAGLE EYE + SMS INTERCEPT (THE WOW FACTOR)
+    // 3. BRIVO AUTH & SMS INTERCEPT
     // ==========================================
-    // 🔀 UPDATED: Now triggers from the main dropdown OR the dedicated Packages page!
     if (reason === "Package / Delivery Courier" || residentName === "Leasing Office (Delivery)") {
       try {
-        // [FUTURE TODO]: Ping the Eagle Eye API here to get the real snapshot URL
-        // const eagleEyeResponse = await fetch('https://api.een.com/YOUR_ENDPOINT');
-        // const imageUrl = await eagleEyeResponse.json();
+        let snapshotUrl = "https://images.unsplash.com/photo-1620455800201-7f00aeec126f?q=80&w=800&auto=format&fit=crop"; // Fallback Image
         
-        // For now, we use a placeholder image to prove the SMS workflow works
-        const placeholderImageUrl = "https://images.unsplash.com/photo-1620455800201-7f00aeec126f?q=80&w=800&auto=format&fit=crop";
+        // Check if Brivo Keys exist in Vercel
+        if (process.env.BRIVO_API_KEY && process.env.BRIVO_CLIENT_ID) {
+           console.log("Brivo credentials found. Attempting secure login...");
+           
+           const brivoAuthString = Buffer.from(`${process.env.BRIVO_CLIENT_ID}:${process.env.BRIVO_CLIENT_SECRET}`).toString('base64');
+           
+           // Shake hands with Brivo to get a secure Access Token
+           const brivoTokenResponse = await fetch('https://auth.brivo.com/oauth/token', {
+             method: 'POST',
+             headers: {
+               'Authorization': `Basic ${brivoAuthString}`,
+               'api-key': process.env.BRIVO_API_KEY,
+               'Content-Type': 'application/x-www-form-urlencoded'
+             },
+             body: new URLSearchParams({
+               grant_type: 'password',
+               username: process.env.BRIVO_USERNAME!,
+               password: process.env.BRIVO_PASSWORD!
+             })
+           });
+
+           if (brivoTokenResponse.ok) {
+              const tokenData = await brivoTokenResponse.json();
+              console.log("✅ Brivo Login Successful! Token acquired.");
+              
+              // We will build the snapshot proxy in the next step using Camera ID 76666830
+              // For now, we confirm login works.
+           } else {
+              console.error("❌ Brivo Login Failed. Check your Vercel keys.");
+           }
+        }
 
         // Send the SMS via Twilio Messages API
         await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
           method: 'POST',
           headers: {
-            'Authorization': `Basic ${authHeader}`,
+            'Authorization': `Basic ${twilioAuthHeader}`,
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
-            To: formattedResidentPhone, // Sends text to the Leasing Office
+            To: formattedResidentPhone, 
             From: TWILIO_PHONE_NUMBER,
             Body: `🚨 GATE ALERT: Delivery driver (${visitorName}) is requesting access at the gate. Connecting call now...`,
-            MediaUrl: placeholderImageUrl // This attaches the photo!
+            MediaUrl: snapshotUrl
           }).toString()
         });
-        console.log("Delivery SMS sent successfully!");
       } catch (smsError) {
-        console.error("Failed to send Delivery SMS:", smsError);
+        console.error("Failed to process Delivery SMS:", smsError);
       }
     }
 
@@ -98,7 +123,7 @@ export async function POST(request: Request) {
     const twilioResponse = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${authHeader}`,
+        'Authorization': `Basic ${twilioAuthHeader}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
